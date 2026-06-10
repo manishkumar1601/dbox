@@ -48,6 +48,20 @@ RUN sed -ri 's!DocumentRoot /var/www/html!DocumentRoot {{ apache_docroot }}!g' \
 RUN printf '<Directory {{ apache_docroot }}>\n    AllowOverride All\n    Require all granted\n</Directory>\n' \
       > /etc/apache2/conf-available/phpbox.conf \
  && a2enconf phpbox
+# Run Apache as root so it can always write to bind-mounted project files
+# (e.g. Laravel's storage/) regardless of how the host exposes file ownership.
+# This is a local development environment, so running as root is acceptable.
+ENV APACHE_RUN_USER=root
+ENV APACHE_RUN_GROUP=root
+{% else %}
+# Run the PHP-FPM worker as root so it can always write to bind-mounted project
+# files (e.g. Laravel's storage/, Symfony's var/) regardless of how the host
+# exposes file ownership — Windows/macOS Docker bind mounts often ignore chmod.
+# This is a local development environment, so running as root is acceptable.
+# php-fpm rejects a root pool unless the master is started with -R.
+RUN sed -ri 's/^user = www-data/user = root/; s/^group = www-data/group = root/' \
+      /usr/local/etc/php-fpm.d/www.conf
+CMD ["php-fpm", "--allow-to-run-as-root"]
 {% endif %}
 
 WORKDIR /var/www/html

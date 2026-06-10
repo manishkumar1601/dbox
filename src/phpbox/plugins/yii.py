@@ -24,4 +24,5 @@ class YiiPlugin(FrameworkPlugin):
         return [
             "composer create-project yiisoft/yii2-app-basic /tmp/app --no-interaction",
             "cp -a /tmp/app/. /var/www/html/ && rm -rf /tmp/app",
+            "chmod -R 777 runtime web/assets 2>/dev/null || true",  # must be writable
         ]

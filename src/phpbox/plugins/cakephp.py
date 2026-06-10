@@ -24,4 +24,5 @@ class CakePhpPlugin(FrameworkPlugin):
         return [
             "composer create-project cakephp/app /tmp/app --no-interaction",
             "cp -a /tmp/app/. /var/www/html/ && rm -rf /tmp/app",
+            "chmod -R 777 tmp logs 2>/dev/null || true",  # must be writable
         ]

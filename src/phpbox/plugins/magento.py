@@ -33,7 +33,7 @@ class MagentoPlugin(FrameworkPlugin):
         ]
 
     def services(self) -> list[str]:
-        return ["redis", "elasticsearch"]
+        return ["elasticsearch", "phpmyadmin"]
 
     def commands(self) -> dict[str, list[str]]:
         return {"magento": ["php", "bin/magento"]}

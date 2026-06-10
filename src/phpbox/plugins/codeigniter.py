@@ -18,7 +18,7 @@ class CodeIgniter4Plugin(FrameworkPlugin):
         return ["pdo_mysql", "intl", "curl", "gd", "opcache"]
 
     def services(self) -> list[str]:
-        return []
+        return ["phpmyadmin", "mailpit"]
 
     def commands(self) -> dict[str, list[str]]:
         return {"spark": ["php", "spark"]}
@@ -27,4 +27,5 @@ class CodeIgniter4Plugin(FrameworkPlugin):
         return [
             "composer create-project codeigniter4/appstarter /tmp/app --no-interaction",
             "cp -a /tmp/app/. /var/www/html/ && rm -rf /tmp/app",
+            "chmod -R 777 writable 2>/dev/null || true",  # must be writable
         ]

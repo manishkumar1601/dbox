@@ -16,6 +16,9 @@ class WordPressPlugin(FrameworkPlugin):
         # WordPress core talks to MySQL via the mysqli extension (not PDO).
         return ["mysqli", "pdo_mysql", "gd", "exif", "intl", "zip", "imagick", "opcache"]
 
+    def services(self) -> list[str]:
+        return ["phpmyadmin", "mailpit"]
+
     def commands(self) -> dict[str, list[str]]:
         # wp-cli is installed in the image; allow-root for container usage.
         return {"wp": ["wp", "--allow-root"]}

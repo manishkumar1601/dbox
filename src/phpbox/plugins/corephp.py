@@ -15,6 +15,9 @@ class CorePhpPlugin(FrameworkPlugin):
     def extensions(self) -> list[str]:
         return ["pdo_mysql", "opcache"]
 
+    def services(self) -> list[str]:
+        return ["phpmyadmin", "mailpit"]
+
     def create_steps(self, project_name: str) -> list[str]:
         return [
             "test -f /var/www/html/index.php || "

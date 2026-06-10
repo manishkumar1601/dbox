@@ -18,7 +18,7 @@ class SymfonyPlugin(FrameworkPlugin):
         return ["pdo_mysql", "intl", "zip", "opcache", "xml"]
 
     def services(self) -> list[str]:
-        return ["mailpit"]
+        return ["mailpit", "phpmyadmin"]
 
     def commands(self) -> dict[str, list[str]]:
         return {"console": ["php", "bin/console"]}
@@ -28,4 +28,5 @@ class SymfonyPlugin(FrameworkPlugin):
             "composer create-project symfony/skeleton /tmp/app --no-interaction",
             "cp -a /tmp/app/. /var/www/html/ && rm -rf /tmp/app",
             "composer --working-dir=/var/www/html require webapp --no-interaction || true",
+            "chmod -R 777 var 2>/dev/null || true",  # cache/logs must be writable
         ]

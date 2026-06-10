@@ -15,6 +15,9 @@ class CodeIgniter3Plugin(FrameworkPlugin):
     def extensions(self) -> list[str]:
         return ["pdo_mysql", "curl", "gd"]
 
+    def services(self) -> list[str]:
+        return ["phpmyadmin", "mailpit"]
+
     def create_steps(self, project_name: str) -> list[str]:
         # CI3 ships as a downloadable archive (no first-party composer starter).
         return [
