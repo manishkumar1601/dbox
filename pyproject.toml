@@ -24,10 +24,10 @@ dependencies = [
 dev = ["pytest>=8.0", "pyinstaller>=6.0"]
 
 [project.urls]
-Homepage = "https://github.com/your-org/phpbox"
-Documentation = "https://github.com/your-org/phpbox/tree/master/docs"
-Repository = "https://github.com/your-org/phpbox"
-Issues = "https://github.com/your-org/phpbox/issues"
+Homepage = "https://github.com/manishkumar1601/phpbox"
+Documentation = "https://github.com/manishkumar1601/phpbox/tree/master/docs"
+Repository = "https://github.com/manishkumar1601/phpbox"
+Issues = "https://github.com/manishkumar1601/phpbox/issues"
 
 [project.scripts]
 phpbox = "phpbox.cli:app"

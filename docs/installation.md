@@ -14,14 +14,14 @@ macOS/Linux). So a fresh machine is essentially: *clone → run the script*.
 
 ```powershell
 # Windows (PowerShell)
-git clone https://github.com/your-org/phpbox
+git clone https://github.com/manishkumar1601/phpbox
 cd phpbox
 powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 ```
 
 ```bash
 # macOS / Linux
-git clone https://github.com/your-org/phpbox
+git clone https://github.com/manishkumar1601/phpbox
 cd phpbox
 ./scripts/install.sh
 ```
@@ -126,7 +126,7 @@ PHPBox's `phpbox doctor` will also check all of this for you.
 ## Install from source (editable)
 
 ```bash
-git clone https://github.com/your-org/phpbox
+git clone https://github.com/manishkumar1601/phpbox
 cd phpbox
 python -m venv .venv
 # Windows:  .venv\Scripts\activate

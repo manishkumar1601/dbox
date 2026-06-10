@@ -32,7 +32,7 @@ then installs PHPBox itself as a **global, isolated** tool (via `pipx`) so the
 "editable", **you can delete the cloned repo afterwards.**
 
 ```bash
-git clone https://github.com/your-org/phpbox
+git clone https://github.com/manishkumar1601/phpbox
 cd phpbox
 
 # Linux / macOS
@@ -69,7 +69,7 @@ rm -rf phpbox          # ✅ safe — the clone is no longer needed
 Use an **editable** install so code changes apply immediately (keep the repo):
 
 ```bash
-git clone https://github.com/your-org/phpbox && cd phpbox
+git clone https://github.com/manishkumar1601/phpbox && cd phpbox
 pip install -e .
 phpbox --help
 ```
