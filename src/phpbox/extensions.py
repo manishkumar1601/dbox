@@ -38,6 +38,7 @@ EXTENSIONS: dict[str, Extension] = {
     "exif": Extension("exif", "core"),
     "sockets": Extension("sockets", "core"),
     "opcache": Extension("opcache", "core"),
+    "mysqli": Extension("mysqli", "core"),
     "pdo_mysql": Extension("pdo_mysql", "core"),
     "pdo_pgsql": Extension("pdo_pgsql", "core", apt=("libpq-dev",)),
     "pgsql": Extension("pgsql", "core", apt=("libpq-dev",)),

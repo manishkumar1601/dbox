@@ -73,14 +73,14 @@ class SslConfig:
 
 @dataclass
 class PortsConfig:
-    http: int = 8080
-    https: int = 8443
-    database: int = 3306
-    redis: int = 6379
-    mailpit: int = 8025
-    phpmyadmin: int = 8081
-    meilisearch: int = 7700
-    elasticsearch: int = 9200
+    http: int = 7010
+    https: int = 7020
+    database: int = 7030
+    redis: int = 7040
+    mailpit: int = 7050
+    phpmyadmin: int = 7060
+    meilisearch: int = 7070
+    elasticsearch: int = 7080
 
 
 @dataclass

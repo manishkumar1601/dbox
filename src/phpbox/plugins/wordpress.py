@@ -13,7 +13,8 @@ class WordPressPlugin(FrameworkPlugin):
     )
 
     def extensions(self) -> list[str]:
-        return ["pdo_mysql", "gd", "exif", "intl", "zip", "imagick", "opcache"]
+        # WordPress core talks to MySQL via the mysqli extension (not PDO).
+        return ["mysqli", "pdo_mysql", "gd", "exif", "intl", "zip", "imagick", "opcache"]
 
     def commands(self) -> dict[str, list[str]]:
         # wp-cli is installed in the image; allow-root for container usage.

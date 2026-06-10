@@ -222,6 +222,11 @@ def test_detect_install_pipx(monkeypatch):
 # ---- plugins -----------------------------------------------------------
 
 
+def test_wordpress_requires_mysqli():
+    # WordPress core uses the mysqli extension; without it WP refuses to run.
+    assert "mysqli" in plugins.get("wordpress").extensions()
+
+
 def test_all_frameworks_registered():
     expected = {
         "laravel", "symfony", "codeigniter", "codeigniter3", "cakephp", "yii",
