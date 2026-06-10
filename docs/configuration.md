@@ -1,0 +1,162 @@
+# Configuration — `phpbox.yml`
+
+`phpbox.yml` is the single source of truth for a project's environment. It is
+created by `phpbox init` / `phpbox create`, can be edited by hand, and is read
+on every `phpbox start` to regenerate the `.phpbox/` artifacts.
+
+## Full example
+
+```yaml
+name: blog
+framework: laravel
+document_root: /public
+
+php:
+  version: "8.4"
+  extensions:
+    - gd
+    - zip
+    - intl
+    - pdo_mysql
+    - opcache
+    - redis
+  ini:
+    memory_limit: 256M
+    upload_max_filesize: 64M
+    post_max_size: 64M
+    max_execution_time: "120"
+
+composer:
+  version: latest
+
+server:
+  type: nginx            # nginx | apache | litespeed | caddy
+
+database:
+  engine: mariadb        # mariadb | mysql | postgres | sqlite
+  version: "11"
+  name: blog
+  user: blog
+  password: secret
+  root_password: root
+
+services:
+  redis: true
+  mailpit: true
+  meilisearch: false
+  elasticsearch: false
+  phpmyadmin: false
+
+ssl:
+  enabled: false
+  host: app.localhost
+
+ports:
+  http: 8080
+  https: 8443
+  database: 3306
+  redis: 6379
+  mailpit: 8025
+  phpmyadmin: 8081
+  meilisearch: 7700
+  elasticsearch: 9200
+```
+
+## Field reference
+
+### Top level
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `name` | string | dir name | Project name; used for container names (`phpbox-<name>-php`). |
+| `framework` | string | `corephp` | One of the [supported frameworks](frameworks.md). |
+| `document_root` | string | `/public` | Web root relative to the app root. Becomes `/var/www/html<document_root>` in the container. |
+
+### `php`
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `version` | string | `8.3` | One of `7.4`, `8.0`, `8.1`, `8.2`, `8.3`, `8.4`. |
+| `extensions` | list | `[gd, zip, intl, pdo_mysql, opcache]` | Extensions baked into the PHP image. See [extensions.md](extensions.md). |
+| `ini` | map | see example | Key/value pairs written to a `php.ini` overlay. Any php.ini directive is allowed. |
+
+### `composer`
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `version` | string | `latest` | Maps to a `composer:<version>` image tag (e.g. `2.8`). |
+
+### `server`
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `type` | string | `nginx` | `nginx`, `apache`, `litespeed`, or `caddy`. See [web-servers.md](web-servers.md). |
+
+### `database`
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `engine` | string | `mariadb` | `mariadb`, `mysql`, `postgres`, or `sqlite`. |
+| `version` | string | `11` | Image tag for the engine. |
+| `name` | string | `app` | Database name. |
+| `user` | string | `app` | Application database user. |
+| `password` | string | `secret` | Password for `user`. |
+| `root_password` | string | `root` | Root/superuser password (used by `db:backup`). |
+
+> SQLite uses no container — store the database file in your project.
+
+### `services`
+
+Booleans that add or remove companion containers. See [services.md](services.md).
+
+| Key | Default | Service |
+|---|---|---|
+| `redis` | `false` | Redis cache/queue |
+| `mailpit` | `false` | Mailpit SMTP catcher (`http://localhost:8025`) |
+| `meilisearch` | `false` | Meilisearch |
+| `elasticsearch` | `false` | Elasticsearch |
+| `phpmyadmin` | `false` | phpMyAdmin (ignored for SQLite) |
+
+### `ssl`
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `false` | Enable HTTPS. A cert is generated automatically on `start`. |
+| `host` | string | `app.localhost` | Common name used for the generated certificate. |
+
+See [ssl.md](ssl.md).
+
+### `ports`
+
+Preferred **host** ports. On `init`/`create` these are auto-adjusted upward to
+avoid collisions with other running projects, so two PHPBox apps never fight
+over `8080`.
+
+| Key | Default | Maps to |
+|---|---|---|
+| `http` | `8080` | web :80 |
+| `https` | `8443` | web :443 (when SSL enabled) |
+| `database` | `3306` | db engine port |
+| `redis` | `6379` | redis :6379 |
+| `mailpit` | `8025` | mailpit web UI |
+| `phpmyadmin` | `8081` | phpMyAdmin :80 |
+| `meilisearch` | `7700` | meilisearch :7700 |
+| `elasticsearch` | `9200` | elasticsearch :9200 |
+
+## Editing by hand vs. commands
+
+Both are equivalent. These commands just edit `phpbox.yml` and regenerate:
+
+| Command | Field changed |
+|---|---|
+| `phpbox php use 8.4` | `php.version` |
+| `phpbox composer use 2.8` | `composer.version` |
+| `phpbox server caddy` | `server.type` |
+| `phpbox db postgres` | `database.engine` (+ a sensible `version`) |
+| `phpbox ext install redis` | appends to `php.extensions` |
+| `phpbox redis enable` | `services.redis` |
+| `phpbox ssl enable` | `ssl.enabled` |
+
+The `.env` PHPBox writes to `.phpbox/env/.env` contains in-container connection
+details (`DB_HOST=db`, `REDIS_HOST=redis`, `MAIL_HOST=mailpit`, …) you can copy
+into your application's own `.env`.

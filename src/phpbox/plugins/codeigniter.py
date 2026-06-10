@@ -1,0 +1,30 @@
+from __future__ import annotations
+
+from phpbox.plugins.base import DetectionRule, FrameworkPlugin
+
+
+class CodeIgniter4Plugin(FrameworkPlugin):
+    name = "codeigniter"
+    label = "CodeIgniter 4"
+    document_root = "/public"
+    priority = 75
+    detection = DetectionRule(
+        files=("spark",),
+        any_files=("app/Config/App.php",),
+        composer=("codeigniter4/framework",),
+    )
+
+    def extensions(self) -> list[str]:
+        return ["pdo_mysql", "intl", "curl", "gd", "opcache"]
+
+    def services(self) -> list[str]:
+        return []
+
+    def commands(self) -> dict[str, list[str]]:
+        return {"spark": ["php", "spark"]}
+
+    def create_steps(self, project_name: str) -> list[str]:
+        return [
+            "composer create-project codeigniter4/appstarter /tmp/app --no-interaction",
+            "cp -a /tmp/app/. /var/www/html/ && rm -rf /tmp/app",
+        ]

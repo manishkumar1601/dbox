@@ -1,0 +1,15 @@
+# PHPBox generated runtime artifacts
+.phpbox/data/
+.phpbox/backups/
+.phpbox/cache/
+phpbox-package.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
