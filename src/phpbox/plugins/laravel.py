@@ -32,3 +32,19 @@ class LaravelPlugin(FrameworkPlugin):
             # views and dies with a tempnam()/UnexpectedValueException.
             "chmod -R 777 storage bootstrap/cache",
         ]
+
+    def app_env(self, db) -> dict[str, str]:
+        if db.engine == "sqlite":
+            return {}
+        driver = "pgsql" if db.engine == "postgres" else "mysql"
+        port = 5432 if db.engine == "postgres" else 3306
+        # Container env wins over Laravel's .env (phpdotenv won't overwrite an
+        # already-set var), so no .env editing needed.
+        return {
+            "DB_CONNECTION": driver,
+            "DB_HOST": "db",
+            "DB_PORT": str(port),
+            "DB_DATABASE": db.name,
+            "DB_USERNAME": db.user,
+            "DB_PASSWORD": db.password,
+        }

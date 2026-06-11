@@ -15,8 +15,18 @@ in `phpbox.yml`.
 
 ## Connecting from your app
 
-Inside the containers the database is reachable at host **`db`**. PHPBox writes
-the relevant values to `.phpbox/env/.env` for you to copy into your app's `.env`:
+Inside the containers the database is reachable at host **`db`**.
+
+For **Laravel, Symfony, CakePHP, and CodeIgniter 4**, PHPBox **auto-configures
+the connection** — it injects the right environment variables into the app
+container (`DB_*` for Laravel, `DATABASE_URL` for Symfony/CakePHP,
+`database.default.*` for CodeIgniter 4), so a freshly created project connects
+with **no manual config**. PHPBox also waits for the database to be *healthy*
+before the app starts, so you won't hit "connection refused" on first boot.
+
+The same values are written to `.phpbox/env/.env` for reference (and for
+frameworks that aren't auto-wired, like WordPress, which uses its install
+wizard — enter host `db`):
 
 ```env
 DB_CONNECTION=mysql      # or pgsql for postgres

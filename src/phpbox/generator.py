@@ -10,7 +10,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from phpbox import extensions
+from phpbox import extensions, plugins
 from phpbox.config import PHPBOX_DIR, ProjectConfig
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -46,15 +46,21 @@ def _database_spec(cfg: ProjectConfig) -> dict | None:
         if db.user != "root":
             env[f"{prefix}_USER"] = db.user
             env[f"{prefix}_PASSWORD"] = db.password
+        if db.engine == "mariadb":
+            healthcheck = ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+        else:
+            healthcheck = ["CMD-SHELL", 'mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent']
         return {
             "image": f"{db.engine}:{db.version}",
             "env": env,
             "data_dir": "/var/lib/mysql",
             "container_port": 3306,
+            "healthcheck": healthcheck,
         }
     if db.engine == "postgres":
         return {
             "image": f"postgres:{db.version}",
+            "healthcheck": ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"],
             "env": {
                 "POSTGRES_DB": db.name,
                 "POSTGRES_USER": db.user,
@@ -75,9 +81,12 @@ def _context(cfg: ProjectConfig) -> dict:
         "litespeed": "litespeedtech/openlitespeed:latest",
     }.get(server, "nginx:alpine")
     db = _database_spec(cfg)
+    plugin = plugins.get(cfg.framework)
+    app_env = plugin.app_env(cfg.database) if plugin else {}
     return {
         "cfg": cfg,
         "name": cfg.name,
+        "app_env": app_env,
         "framework": cfg.framework,
         "php_version": cfg.php.version,
         "composer_version": cfg.composer.version,

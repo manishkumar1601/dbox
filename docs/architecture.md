@@ -104,6 +104,27 @@ application source is bind-mounted into every container at `/var/www/html`.
 > all bind-mount permission issues. It's a local dev environment, so this is an
 > acceptable trade-off.
 
+## Things that "just work"
+
+A few behaviours are built in so a fresh project runs without manual fixups:
+
+* **Auto database connection** — for Laravel, Symfony, CakePHP, and
+  CodeIgniter 4, the generator injects the DB connection as environment
+  variables into the app container (`DB_*` / `DATABASE_URL` /
+  `database.default.*`), with `clear_env = no` in PHP-FPM so they reach PHP. No
+  manual `.env` editing.
+* **Wait for the database** — the `db` service has a healthcheck and the app
+  container `depends_on` it `condition: service_healthy`, so the app never
+  starts before the database is ready (no first-boot "connection refused").
+* **Automatic free ports** — `ports.py` queries Docker for ports already
+  published by other containers (a host socket check alone misses Docker's
+  proxied ports) and shifts any busy port to the next free one — at create time
+  *and* on every `start`.
+* **Writable project dirs** — PHP runs as root in-container (see above) so
+  framework write paths work regardless of host bind-mount ownership.
+* **Fast image builds** — extensions install via `install-php-extensions`
+  (prebuilt binaries), and a shared Composer cache speeds repeat scaffolds.
+
 ## Why shell out to `docker compose`?
 
 Rather than the Docker SDK, PHPBox invokes the `docker compose` CLI. This means:

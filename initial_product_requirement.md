@@ -74,8 +74,6 @@ phpbox console cache:clear
 * CodeIgniter 4
 * CakePHP
 * Yii
-* Slim
-* Laminas
 * Core PHP
 
 ## CMS
@@ -193,41 +191,6 @@ Document Root:
 
 ```txt
 /web
-```
-
----
-
-## Slim
-
-Detect:
-
-```txt
-public/index.php
-composer.json  (requires "slim/slim")
-```
-
-Document Root:
-
-```txt
-/public
-```
-
----
-
-## Laminas
-
-Detect:
-
-```txt
-config/modules.config.php
-module/
-composer.json  (requires "laminas/laminas-mvc")
-```
-
-Document Root:
-
-```txt
-/public
 ```
 
 ---

@@ -15,48 +15,36 @@ rebuilds the PHP image.
 
 ## How installation works
 
-The generator groups requested extensions by install method and renders the
-matching Dockerfile steps:
+The generated `Dockerfile` installs every requested extension with
+[`install-php-extensions`](https://github.com/mlocati/docker-php-extension-installer):
 
-| Method | Mechanism | Examples |
-|---|---|---|
-| `core` | `docker-php-ext-install` (with `docker-php-ext-configure` when needed) | `gd`, `intl`, `zip`, `pdo_mysql`, `opcache` |
-| `pecl` | `pecl install` + `docker-php-ext-enable` | `redis`, `imagick`, `mongodb`, `xdebug` |
-| `builtin` | already in the base image — no action | `curl` |
+```dockerfile
+COPY --from=mlocati/php-extension-installer:latest /usr/bin/install-php-extensions /usr/local/bin/
+RUN install-php-extensions gd zip intl pdo_mysql opcache redis ...
+```
 
-Required system packages (Debian `apt`) are resolved automatically — e.g.
-`gd` pulls in `libfreetype6-dev`/`libjpeg62-turbo-dev`/`libpng-dev`, `intl`
-pulls `libicu-dev`, `imagick` pulls `libmagickwand-dev`.
+This tool pulls **prebuilt binaries where available** and resolves the needed
+system libraries (libicu, libpng, etc.) automatically — so builds are much
+faster than compiling each extension from source, and there's no apt list to
+maintain. It supports core, PECL, and bundled extensions alike (`gd`, `intl`,
+`redis`, `imagick`, `xdebug`, `mysqli`, …).
 
 ## Extensions with first-class metadata
 
-| Extension | Method | System packages |
-|---|---|---|
-| `gd` | core | libfreetype6-dev, libjpeg62-turbo-dev, libpng-dev |
-| `intl` | core | libicu-dev |
-| `zip` | core | libzip-dev |
-| `soap` | core | libxml2-dev |
-| `ldap` | core | libldap2-dev |
-| `xml` | core | libxml2-dev |
-| `xsl` | core | libxslt1-dev |
-| `mbstring` | core | libonig-dev |
-| `sodium` | core | libsodium-dev |
-| `pdo_pgsql` / `pgsql` | core | libpq-dev |
-| `mysqli`, `pdo_mysql` | core | — |
-| `bcmath`, `exif`, `sockets`, `opcache` | core | — |
-| `curl` | builtin | — |
-| `redis` | pecl | — |
-| `imagick` | pecl | libmagickwand-dev |
-| `mongodb` | pecl | — |
-| `xdebug` | pecl | — |
+PHPBox keeps lightweight metadata for the common extensions (used by framework
+defaults and the `ext list` view); any other valid extension name is passed
+straight to `install-php-extensions`.
+
+`gd`, `intl`, `zip`, `soap`, `ldap`, `xml`, `xsl`, `mbstring`, `sodium`,
+`pdo_mysql`, `mysqli`, `pdo_pgsql`, `pgsql`, `bcmath`, `exif`, `sockets`,
+`opcache`, `curl`, `redis`, `imagick`, `mongodb`, `xdebug`
 
 ## Other official extensions
 
-Any extension name not in the table above is treated as a `core` install and
-passed to `docker-php-ext-install`. If the base image can't build it, the
-Docker build fails loudly (rather than silently dropping it) so you know to
-adjust. In practice this means **all official PHP extensions** are reachable —
-the table just captures the common ones with their system-package needs.
+Any extension name not listed above is still passed to `install-php-extensions`,
+which supports the full catalogue of official PHP extensions. If it can't be
+installed, the Docker build fails loudly (rather than silently dropping it) so
+you know to adjust.
 
 ## Defaults
 

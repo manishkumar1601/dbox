@@ -1,6 +1,6 @@
 # Frameworks
 
-PHPBox supports 9 frameworks and 4 CMS platforms. Each is implemented as a
+PHPBox supports 7 frameworks and 4 CMS platforms. Each is implemented as a
 plugin in `src/phpbox/plugins/` describing how to detect it, what it needs, how
 to scaffold it, and which native CLI it exposes.
 
@@ -14,8 +14,6 @@ to scaffold it, and which native CLI it exposes.
 | `codeigniter3` | CodeIgniter 3 | `/` | — |
 | `cakephp` | CakePHP | `/webroot` | `phpbox cake` |
 | `yii` | Yii | `/web` | `phpbox yii` |
-| `slim` | Slim | `/public` | — |
-| `laminas` | Laminas | `/public` | — |
 | `corephp` | Core PHP | `/` | — |
 | `wordpress` | WordPress | `/` | `phpbox wp` |
 | `drupal` | Drupal | `/web` | `phpbox drush` |
@@ -35,17 +33,25 @@ framework (toggle any afterwards — see [services.md](services.md)):
 | WordPress | ✅ | ✅ | | |
 | Core PHP | ✅ | ✅ | | |
 | Magento | | ✅ | ✅ | |
-| CakePHP, Yii, Slim, Laminas, Drupal, Joomla | | | | |
+| CakePHP, Yii, Drupal, Joomla | | | | |
 
 **Redis is off by default everywhere** — enable per project with
 `phpbox redis enable`. Every framework also gets a **MariaDB** database (unless
 you switch to SQLite), with credentials matching the project name plus a
 `root` / `root` admin login (see [databases.md](databases.md)).
 
+## Automatic database connection
+
+For **Laravel, Symfony, CakePHP, and CodeIgniter 4**, PHPBox wires the app to
+the database automatically (via injected environment variables) — a freshly
+created project connects with no manual config, and waits for the DB to be ready
+before starting. See [databases.md](databases.md#connecting-from-your-app).
+
 ## Notes on specific frameworks
 
 * **WordPress** — needs the `mysqli` extension (not just PDO); PHPBox enables it
-  automatically. WordPress installs WP-CLI into the image (`phpbox wp …`).
+  automatically. DB config is entered in WordPress's install wizard (host `db`).
+  WordPress installs WP-CLI into the image (`phpbox wp …`).
 * **CodeIgniter 3** — CI 3.1.x isn't clean on PHP 8.2+ (it emits "dynamic
   property deprecated" notices), so PHPBox defaults CI3 projects to **PHP 8.1**.
   Switch any project's PHP with `phpbox php use <version>`.
@@ -70,8 +76,6 @@ higher `priority` wins.
 | CodeIgniter 3 | `application/config/config.php` + `system/core/CodeIgniter.php` | — |
 | CakePHP | `bin/cake` | `cakephp/cakephp` |
 | Yii | `yii` | `yiisoft/yii2` |
-| Slim | — | `slim/slim` |
-| Laminas | `config/modules.config.php` | `laminas/laminas-mvc` |
 | WordPress | `wp-config.php`, `wp-load.php`, or `wp-content/` | — |
 | Drupal | `core/lib/Drupal.php` or `sites/default/settings.php` | `drupal/core` |
 | Magento | `bin/magento` | `magento/product-community-edition` |
@@ -93,8 +97,6 @@ container, so the result lands in your project on the host:
 | CodeIgniter 4 | `composer create-project codeigniter4/appstarter` |
 | CakePHP | `composer create-project cakephp/app` |
 | Yii | `composer create-project yiisoft/yii2-app-basic` |
-| Slim | `composer create-project slim/slim-skeleton` |
-| Laminas | `composer create-project laminas/laminas-mvc-skeleton` |
 | Drupal | `composer create-project drupal/recommended-project` + Drush |
 | WordPress | `wp core download` (WP-CLI is baked into the image) |
 | CodeIgniter 3 | downloads the official release tarball |

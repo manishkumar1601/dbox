@@ -23,9 +23,16 @@ services:
       - "{{ ports.https }}:443"
       {% endif %}
     {% endif %}
+    {% if app_env %}
+    environment:
+      {% for key, value in app_env.items() %}
+      "{{ key }}": "{{ value }}"
+      {% endfor %}
+    {% endif %}
     {% if needs_db %}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     {% endif %}
     networks:
       - phpbox
@@ -72,6 +79,12 @@ services:
       - ./data/{{ db_engine }}:{{ db.data_dir }}
     ports:
       - "{{ ports.database }}:{{ db.container_port }}"
+    healthcheck:
+      test: {{ db.healthcheck | tojson }}
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
     networks:
       - phpbox
   {% endif %}

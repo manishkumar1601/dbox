@@ -53,6 +53,9 @@ ENV APACHE_RUN_GROUP=root
 # php-fpm rejects a root pool unless the master is started with -R.
 RUN sed -ri 's/^user = www-data/user = root/; s/^group = www-data/group = root/' \
       /usr/local/etc/php-fpm.d/www.conf
+# clear_env = no lets container environment variables (DB_*, DATABASE_URL, …)
+# reach PHP scripts so frameworks auto-connect to the `db` container.
+RUN echo 'clear_env = no' >> /usr/local/etc/php-fpm.d/www.conf
 CMD ["php-fpm", "--allow-to-run-as-root"]
 {% endif %}
 

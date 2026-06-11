@@ -98,6 +98,11 @@ a PHP `Dockerfile` (with your extensions), `php.ini`, and the web-server config.
 PHPBox then drives `docker compose` to build and run the stack. See
 [docs/architecture.md](docs/architecture.md) for the full picture.
 
+It aims to **just work** out of the box: free ports are picked automatically
+(and re-checked on every start), the database connection is auto-wired for
+Laravel/Symfony/CakePHP/CodeIgniter 4, the app waits for the database to be
+ready, and a post-start summary prints every URL and credential in one place.
+
 ---
 
 ## Project structure
@@ -152,8 +157,8 @@ Full reference: [docs/commands.md](docs/commands.md).
 
 ## Supported frameworks
 
-Laravel · Symfony · CodeIgniter 3 & 4 · CakePHP · Yii · Slim · Laminas ·
-Core PHP · WordPress · Drupal · Magento · Joomla
+Laravel · Symfony · CodeIgniter 3 & 4 · CakePHP · Yii · Core PHP ·
+WordPress · Drupal · Magento · Joomla
 
 Details and detection rules: [docs/frameworks.md](docs/frameworks.md).
 

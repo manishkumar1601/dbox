@@ -84,7 +84,7 @@ auto-enabled) for Magento.
 | Core PHP | Mailpit, phpMyAdmin |
 | Symfony | Mailpit, phpMyAdmin |
 | Magento | Elasticsearch, phpMyAdmin |
-| CakePHP, Yii, Slim, Laminas, Drupal, Joomla | (none) |
+| CakePHP, Yii, Drupal, Joomla | (none) |
 
 Redis is **off by default everywhere** — enable it per project with
 `phpbox redis enable`. You can toggle any service afterwards.

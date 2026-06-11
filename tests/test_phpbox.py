@@ -264,9 +264,10 @@ def test_wordpress_requires_mysqli():
 def test_all_frameworks_registered():
     expected = {
         "laravel", "symfony", "codeigniter", "codeigniter3", "cakephp", "yii",
-        "slim", "laminas", "wordpress", "drupal", "magento", "joomla", "corephp",
+        "wordpress", "drupal", "magento", "joomla", "corephp",
     }
     assert expected.issubset(set(plugins.names()))
+    assert "slim" not in plugins.names() and "laminas" not in plugins.names()
 
 
 # ---- ports -------------------------------------------------------------

@@ -110,6 +110,13 @@ class FrameworkPlugin:
         """
         return None
 
+    def app_env(self, db) -> dict[str, str]:
+        """Environment variables injected into the app container so the
+        framework connects to the PHPBox database (host ``db``) with no manual
+        config. ``db`` is the project's DatabaseConfig. Default: none.
+        """
+        return {}
+
     def create_credentials(self) -> list[Credential]:
         """Secrets to collect before scaffolding (empty for most frameworks)."""
         return []

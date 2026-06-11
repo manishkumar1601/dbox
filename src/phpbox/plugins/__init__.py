@@ -11,10 +11,8 @@ from phpbox.plugins.codeigniter3 import CodeIgniter3Plugin
 from phpbox.plugins.corephp import CorePhpPlugin
 from phpbox.plugins.drupal import DrupalPlugin
 from phpbox.plugins.joomla import JoomlaPlugin
-from phpbox.plugins.laminas import LaminasPlugin
 from phpbox.plugins.laravel import LaravelPlugin
 from phpbox.plugins.magento import MagentoPlugin
-from phpbox.plugins.slim import SlimPlugin
 from phpbox.plugins.symfony import SymfonyPlugin
 from phpbox.plugins.wordpress import WordPressPlugin
 from phpbox.plugins.yii import YiiPlugin
@@ -27,8 +25,6 @@ _PLUGIN_CLASSES = [
     CodeIgniter3Plugin,
     CakePhpPlugin,
     YiiPlugin,
-    SlimPlugin,
-    LaminasPlugin,
     WordPressPlugin,
     DrupalPlugin,
     MagentoPlugin,

@@ -15,7 +15,8 @@ class CakePhpPlugin(FrameworkPlugin):
     )
 
     def extensions(self) -> list[str]:
-        return ["pdo_mysql", "intl", "mbstring", "opcache"]
+        # pdo_sqlite is used by DebugKit's storage in development.
+        return ["pdo_mysql", "pdo_sqlite", "intl", "mbstring", "opcache"]
 
     def commands(self) -> dict[str, list[str]]:
         return {"cake": ["bin/cake"]}
@@ -26,3 +27,11 @@ class CakePhpPlugin(FrameworkPlugin):
             "cp -a /tmp/app/. /var/www/html/ && rm -rf /tmp/app",
             "chmod -R 777 tmp logs 2>/dev/null || true",  # must be writable
         ]
+
+    def app_env(self, db) -> dict[str, str]:
+        if db.engine == "sqlite":
+            return {}
+        scheme = "postgres" if db.engine == "postgres" else "mysql"
+        port = 5432 if db.engine == "postgres" else 3306
+        # app_local.php reads `env('DATABASE_URL')`, which overrides host/creds.
+        return {"DATABASE_URL": f"{scheme}://{db.user}:{db.password}@db:{port}/{db.name}"}

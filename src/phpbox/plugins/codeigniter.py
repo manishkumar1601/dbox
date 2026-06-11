@@ -29,3 +29,18 @@ class CodeIgniter4Plugin(FrameworkPlugin):
             "cp -a /tmp/app/. /var/www/html/ && rm -rf /tmp/app",
             "chmod -R 777 writable 2>/dev/null || true",  # must be writable
         ]
+
+    def app_env(self, db) -> dict[str, str]:
+        if db.engine == "sqlite":
+            return {}
+        dbdriver = "Postgre" if db.engine == "postgres" else "MySQLi"
+        port = 5432 if db.engine == "postgres" else 3306
+        # CI4 reads these dotted keys from the environment.
+        return {
+            "database.default.hostname": "db",
+            "database.default.database": db.name,
+            "database.default.username": db.user,
+            "database.default.password": db.password,
+            "database.default.DBDriver": dbdriver,
+            "database.default.port": str(port),
+        }
