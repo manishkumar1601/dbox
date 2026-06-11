@@ -32,6 +32,7 @@ from phpbox.config import (
 )
 from phpbox.console import console, error, info, step, success, warn
 from phpbox.doctor import run_checks
+from phpbox import ports
 from phpbox.ports import allocate
 
 app = typer.Typer(
@@ -175,6 +176,36 @@ def _ensure_docker() -> None:
     if not engine.docker_available():
         error("Docker is not installed or not on PATH. Install Docker Desktop / Engine.")
         raise typer.Exit(1)
+
+
+def _revalidate_ports(cfg: ProjectConfig) -> bool:
+    """Shift any occupied host port to the next free one, returning True if
+    anything changed. The project's own running ports are kept as-is."""
+    own = ports.project_published_ports(cfg.name)
+    taken = ports.docker_published_ports() - own
+
+    # Only the ports that will actually be published matter.
+    fields = ["http"]
+    if cfg.ssl.enabled:
+        fields.append("https")
+    if cfg.database.engine != "sqlite":
+        fields.append("database")
+        if cfg.services.phpmyadmin:
+            fields.append("phpmyadmin")
+    for svc in ("redis", "mailpit", "meilisearch", "elasticsearch"):
+        if getattr(cfg.services, svc):
+            fields.append(svc)
+
+    changed = False
+    for field in fields:
+        current = getattr(cfg.ports, field)
+        chosen = ports.find_free(current, taken)
+        if chosen != current:
+            setattr(cfg.ports, field, chosen)
+            warn(f"Port {current} is busy — using {chosen} for {field}")
+            changed = True
+        taken.add(chosen)
+    return changed
 
 
 def _run_framework(ctx: typer.Context, prefix: list[str]) -> None:
@@ -368,6 +399,8 @@ def create(
         raise typer.Exit(1)
 
     step("Starting environment…")
+    if _revalidate_ports(cfg):
+        config.save(target, cfg)
     generator.generate(target, cfg)
     engine.up(target, build=False)
     _print_urls(cfg)
@@ -385,6 +418,10 @@ def start(
     """Generate config and start the environment."""
     project_dir, cfg = _resolve()
     _ensure_docker()
+
+    # Shift any port that became occupied since the project was created.
+    if _revalidate_ports(cfg):
+        config.save(project_dir, cfg)
     generator.generate(project_dir, cfg)
 
     if cfg.ssl.enabled and not certs.have_certs(project_dir):

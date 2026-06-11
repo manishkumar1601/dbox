@@ -59,10 +59,12 @@ def run_once(
 
     A global ``phpbox-composer-cache`` volume is mounted so Composer downloads
     are reused across every project — making repeat ``phpbox create`` runs much
-    faster.
+    faster. ``--no-deps`` keeps it from starting the database (scaffolding only
+    needs PHP + Composer), which also avoids host-port conflicts with other
+    running projects.
     """
     args = [
-        "run", "--rm",
+        "run", "--rm", "--no-deps",
         "-v", "phpbox-composer-cache:/tmp/phpbox-composer",
         "-e", "COMPOSER_CACHE_DIR=/tmp/phpbox-composer",
     ]

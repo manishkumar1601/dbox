@@ -275,3 +275,19 @@ def test_all_frameworks_registered():
 def test_allocate_no_collisions():
     chosen = allocate({"a": 8080, "b": 8080, "c": 8080})
     assert len(set(chosen.values())) == 3
+
+
+def test_find_free_skips_taken_ports():
+    from phpbox.ports import find_free
+
+    chosen = find_free(8080, taken={8080, 8081})
+    assert chosen >= 8082
+
+
+def test_docker_published_ports_parsing(monkeypatch):
+    # Ports already published by containers must be treated as taken.
+    import phpbox.ports as ports
+
+    monkeypatch.setattr(ports, "docker_published_ports", lambda: {8080, 8081})
+    chosen = allocate({"http": 8080})
+    assert chosen["http"] >= 8082
