@@ -22,6 +22,34 @@ to scaffold it, and which native CLI it exposes.
 | `magento` | Magento | `/pub` | `phpbox magento` |
 | `joomla` | Joomla | `/` | `phpbox joomla` |
 
+## Default services per framework
+
+`phpbox create`/`init` enable a sensible set of companion services per
+framework (toggle any afterwards — see [services.md](services.md)):
+
+| Framework | Mailpit | phpMyAdmin | Elasticsearch | Redis |
+|---|:---:|:---:|:---:|:---:|
+| Laravel | ✅ | ✅ | | |
+| Symfony | ✅ | ✅ | | |
+| CodeIgniter 3 & 4 | ✅ | ✅ | | |
+| WordPress | ✅ | ✅ | | |
+| Core PHP | ✅ | ✅ | | |
+| Magento | | ✅ | ✅ | |
+| CakePHP, Yii, Slim, Laminas, Drupal, Joomla | | | | |
+
+**Redis is off by default everywhere** — enable per project with
+`phpbox redis enable`. Every framework also gets a **MariaDB** database (unless
+you switch to SQLite), with credentials matching the project name plus a
+`root` / `root` admin login (see [databases.md](databases.md)).
+
+## Notes on specific frameworks
+
+* **WordPress** — needs the `mysqli` extension (not just PDO); PHPBox enables it
+  automatically. WordPress installs WP-CLI into the image (`phpbox wp …`).
+* **CodeIgniter 3** — CI 3.1.x isn't clean on PHP 8.2+ (it emits "dynamic
+  property deprecated" notices), so PHPBox defaults CI3 projects to **PHP 8.1**.
+  Switch any project's PHP with `phpbox php use <version>`.
+
 ## How detection works
 
 `phpbox init` / `phpbox detect` run every plugin's detection rules and pick the
@@ -98,15 +126,16 @@ Keys*. The public key is the username, the private key the password.
    and Elasticsearch containers are up:
 
    ```bash
+   # db-name is your project name; root / root always works as the DB login
    phpbox magento setup:install \
-     --base-url=http://localhost --db-host=db --db-name=magento \
-     --db-user=magento --db-password=secret \
+     --base-url=http://localhost --db-host=db --db-name=<project> \
+     --db-user=root --db-password=root \
      --search-engine=elasticsearch7 --elasticsearch-host=elasticsearch \
      --admin-firstname=Admin --admin-lastname=User \
      --admin-email=admin@example.com --admin-user=admin --admin-password=Admin123!
    ```
 
-Magento enables Redis and Elasticsearch by default and installs the full
+Magento enables Elasticsearch and phpMyAdmin by default and installs the full
 extension set it requires (`bcmath`, `gd`, `intl`, `mbstring`, `soap`,
 `sockets`, `sodium`, `xml`, `xsl`, `zip`, `pdo_mysql`, `opcache`).
 

@@ -58,6 +58,17 @@ def test_detect_php_version_from_composer(tmp_path):
     assert detection.detect(tmp_path).php_version == "8.1"
 
 
+def test_codeigniter3_prefers_php_81(tmp_path):
+    # CI3 isn't PHP 8.2+ clean, so it should default to 8.1 when unspecified.
+    _mk(
+        tmp_path,
+        {"application/config/config.php": "<?php", "system/core/CodeIgniter.php": "<?php"},
+    )
+    det = detection.detect(tmp_path)
+    assert det.framework == "codeigniter3"
+    assert det.php_version == "8.1"
+
+
 def test_detect_falls_back_to_corephp(tmp_path):
     _mk(tmp_path, {"index.php": "<?php echo 'hi';"})
     assert detection.detect(tmp_path).framework == "corephp"
@@ -125,6 +136,29 @@ def test_generator_apache_has_no_web_service(tmp_path):
     assert "web" not in data["services"]
     dockerfile = (tmp_path / ".phpbox" / "php" / "Dockerfile").read_text()
     assert "-apache" in dockerfile
+
+
+def test_root_db_user_not_recreated_for_mysql(tmp_path):
+    # If someone sets the DB user to root, MySQL/MariaDB must not re-create it.
+    cfg = ProjectConfig(
+        name="x", framework="laravel", database=DatabaseConfig(engine="mariadb", user="root")
+    )
+    generator.generate(tmp_path, cfg)
+    env = yaml.safe_load((tmp_path / ".phpbox" / "docker-compose.yml").read_text())["services"]["db"]["environment"]
+    assert "MARIADB_USER" not in env
+    assert env["MARIADB_ROOT_PASSWORD"] == "root"
+
+
+def test_db_user_defaults_to_app_name(tmp_path):
+    # Normal projects get a DB user/password matching the project name.
+    cfg = ProjectConfig(
+        name="blog", framework="laravel",
+        database=DatabaseConfig(engine="mariadb", name="blog", user="blog", password="blog"),
+    )
+    generator.generate(tmp_path, cfg)
+    env = yaml.safe_load((tmp_path / ".phpbox" / "docker-compose.yml").read_text())["services"]["db"]["environment"]
+    assert env["MARIADB_USER"] == "blog"
+    assert env["MARIADB_PASSWORD"] == "blog"
 
 
 def test_generator_sqlite_has_no_db(tmp_path):

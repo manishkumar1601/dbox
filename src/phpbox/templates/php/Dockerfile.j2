@@ -6,26 +6,18 @@ FROM php:{{ php_version }}-apache
 FROM php:{{ php_version }}-fpm
 {% endif %}
 
-# System packages required to build the selected PHP extensions.
+# Base tooling (Composer/WP-CLI/scaffolding need these).
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git unzip curl ca-certificates \
-{% for pkg in ext.apt %}
-    {{ pkg }} \
-{% endfor %}
  && rm -rf /var/lib/apt/lists/*
 
-# Configure + install core extensions.
-{% for e in ext.configure %}
-RUN docker-php-ext-configure {{ e.name }} {{ e.configure }}
-{% endfor %}
-{% if ext.core %}
-RUN docker-php-ext-install -j"$(nproc)" {{ ext.core | join(' ') }}
+# Install PHP extensions with mlocati/install-php-extensions: it pulls
+# prebuilt binaries where available and resolves system dependencies
+# automatically — far faster than compiling each extension from source.
+COPY --from=mlocati/php-extension-installer:latest /usr/bin/install-php-extensions /usr/local/bin/
+{% if php_extensions %}
+RUN install-php-extensions {{ php_extensions | join(' ') }}
 {% endif %}
-
-# PECL extensions.
-{% for e in ext.pecl %}
-RUN pecl install {{ e }} && docker-php-ext-enable {{ e }}
-{% endfor %}
 
 # Composer.
 COPY --from=composer:{{ composer_version }} /usr/bin/composer /usr/bin/composer

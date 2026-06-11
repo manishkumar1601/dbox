@@ -42,7 +42,8 @@ pulls `libicu-dev`, `imagick` pulls `libmagickwand-dev`.
 | `mbstring` | core | libonig-dev |
 | `sodium` | core | libsodium-dev |
 | `pdo_pgsql` / `pgsql` | core | libpq-dev |
-| `bcmath`, `exif`, `sockets`, `opcache`, `pdo_mysql` | core | — |
+| `mysqli`, `pdo_mysql` | core | — |
+| `bcmath`, `exif`, `sockets`, `opcache` | core | — |
 | `curl` | builtin | — |
 | `redis` | pecl | — |
 | `imagick` | pecl | libmagickwand-dev |
@@ -59,10 +60,10 @@ the table just captures the common ones with their system-package needs.
 
 ## Defaults
 
-New projects start with `gd`, `zip`, `intl`, `pdo_mysql`, `opcache`. Framework
-detection adds more (e.g. Laravel adds `bcmath`, `exif`, `redis`; Magento adds
-`soap`, `xsl`, `sodium`, `mbstring`, …). Anything in `composer.json` as `ext-*`
-is picked up by `phpbox init` too.
+New projects start with `gd`, `zip`, `intl`, `pdo_mysql`, `opcache`. Each
+framework adds what it needs (e.g. Laravel adds `bcmath`, `exif`; WordPress adds
+`mysqli`, `imagick`; Magento adds `soap`, `xsl`, `sodium`, `mbstring`, …).
+Anything in `composer.json` as `ext-*` is picked up by `phpbox init` too.
 
 ## Xdebug
 

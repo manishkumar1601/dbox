@@ -36,14 +36,19 @@ def _database_spec(cfg: ProjectConfig) -> dict | None:
         return None
     if db.engine in ("mariadb", "mysql"):
         prefix = "MARIADB" if db.engine == "mariadb" else "MYSQL"
+        env = {
+            f"{prefix}_DATABASE": db.name,
+            f"{prefix}_ROOT_PASSWORD": db.root_password,
+        }
+        # MySQL/MariaDB reject MYSQL_USER=root (root already exists), so only
+        # create a separate app user when it isn't root. Logging in as root
+        # uses the root password above.
+        if db.user != "root":
+            env[f"{prefix}_USER"] = db.user
+            env[f"{prefix}_PASSWORD"] = db.password
         return {
             "image": f"{db.engine}:{db.version}",
-            "env": {
-                f"{prefix}_DATABASE": db.name,
-                f"{prefix}_USER": db.user,
-                f"{prefix}_PASSWORD": db.password,
-                f"{prefix}_ROOT_PASSWORD": db.root_password,
-            },
+            "env": env,
             "data_dir": "/var/lib/mysql",
             "container_port": 3306,
         }
@@ -83,6 +88,8 @@ def _context(cfg: ProjectConfig) -> dict:
         "separate_web": separate_web,
         "web_image": web_image,
         "ext": extensions.resolve(cfg.php.extensions),
+        # de-duped extension list for install-php-extensions
+        "php_extensions": list(dict.fromkeys(cfg.php.extensions)),
         "install_wp_cli": cfg.framework == "wordpress",
         "ports": cfg.ports,
         "ssl": cfg.ssl,

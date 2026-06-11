@@ -116,19 +116,59 @@ def _services_from(names: list[str]) -> ServicesConfig:
     return s
 
 
+def _kv(label: str, value: str) -> None:
+    """Print an aligned key/value line for the summary."""
+    console.print(f"    [muted]{label:<16}[/muted] {value}")
+
+
 def _print_urls(cfg: ProjectConfig) -> None:
     scheme = "https" if cfg.ssl.enabled else "http"
     port = cfg.ports.https if cfg.ssl.enabled else cfg.ports.http
+    db = cfg.database
+
     console.print()
-    success(f"App:        {scheme}://localhost:{port}")
+    console.rule(f"[title]{cfg.name}[/title] — environment ready", align="left")
+
+    # --- URLs ----------------------------------------------------------
+    console.print("[title]URLs[/title]")
+    _kv("App", f"{scheme}://localhost:{port}")
     if cfg.services.mailpit:
-        info(f"Mailpit:    http://localhost:{cfg.ports.mailpit}")
-    if cfg.services.phpmyadmin and cfg.database.engine != "sqlite":
-        info(f"phpMyAdmin: http://localhost:{cfg.ports.phpmyadmin}")
+        _kv("Mailpit", f"http://localhost:{cfg.ports.mailpit}")
+    if cfg.services.phpmyadmin and db.engine != "sqlite":
+        _kv("phpMyAdmin", f"http://localhost:{cfg.ports.phpmyadmin}")
     if cfg.services.meilisearch:
-        info(f"Meilisearch: http://localhost:{cfg.ports.meilisearch}")
+        _kv("Meilisearch", f"http://localhost:{cfg.ports.meilisearch}")
     if cfg.services.elasticsearch:
-        info(f"Elasticsearch: http://localhost:{cfg.ports.elasticsearch}")
+        _kv("Elasticsearch", f"http://localhost:{cfg.ports.elasticsearch}")
+
+    # --- Database ------------------------------------------------------
+    console.print("[title]Database[/title]")
+    if db.engine == "sqlite":
+        _kv("Engine", "SQLite (file-based — no server)")
+    else:
+        driver = "pgsql" if db.engine == "postgres" else "mysql"
+        cport = 5432 if db.engine == "postgres" else 3306
+        _kv("Engine", db.engine)
+        _kv("Host (in app)", "db")
+        _kv("Host (your PC)", f"localhost:{cfg.ports.database}")
+        _kv("Database", db.name)
+        _kv("Username", db.user)
+        _kv("Password", db.password)
+        _kv("Root login", f"root / {db.root_password}")
+        _kv("Connection", f"{driver}://{db.user}:{db.password}@db:{cport}/{db.name}")
+
+    # --- Other services ------------------------------------------------
+    if cfg.services.redis or cfg.services.mailpit:
+        console.print("[title]Services[/title]")
+        if cfg.services.redis:
+            _kv("Redis", f"redis:6379  (localhost:{cfg.ports.redis} from your PC)")
+        if cfg.services.mailpit:
+            _kv("Mailpit SMTP", "mailpit:1025")
+
+    console.print(
+        "[muted]    Connection details are also written to "
+        ".phpbox/env/.env[/muted]"
+    )
 
 
 def _ensure_docker() -> None:
@@ -254,7 +294,11 @@ def init(
         ),
         composer=ComposerConfig(),
         server=ServerConfig(),
-        database=DatabaseConfig(name=_slug(project_dir.name), user=_slug(project_dir.name)),
+        database=DatabaseConfig(
+            name=_slug(project_dir.name),
+            user=_slug(project_dir.name),
+            password=_slug(project_dir.name),
+        ),
         services=_services_from(det.services),
         ports=_allocated_ports(),
     )
@@ -287,8 +331,11 @@ def create(
         name=_slug(name),
         framework=plugin.name,
         document_root=plugin.document_root,
-        php=PhpConfig(extensions=_merge_extensions(PhpConfig().extensions, plugin.extensions())),
-        database=DatabaseConfig(name=db_name, user=db_name),
+        php=PhpConfig(
+            version=plugin.php_version or PhpConfig().version,
+            extensions=_merge_extensions(PhpConfig().extensions, plugin.extensions()),
+        ),
+        database=DatabaseConfig(name=db_name, user=db_name, password=db_name),
         services=_services_from(plugin.services()),
         ports=_allocated_ports(),
     )

@@ -24,7 +24,7 @@ DB_HOST=db
 DB_PORT=3306             # 5432 for postgres
 DB_DATABASE=blog
 DB_USERNAME=blog
-DB_PASSWORD=secret
+DB_PASSWORD=blog
 ```
 
 From the **host** (e.g. a GUI client), connect to `localhost` on the mapped
@@ -32,23 +32,31 @@ From the **host** (e.g. a GUI client), connect to `localhost` on the mapped
 
 ## Credentials
 
-Set under `database` in `phpbox.yml`:
+`phpbox create`/`init` set the database name, user, and password all to the
+**project name**, plus a `root` / `root` admin login:
 
 ```yaml
 database:
   engine: mariadb
   version: "11"
-  name: blog
-  user: blog
-  password: secret
-  root_password: root
+  name: blog            # = project name
+  user: blog            # = project name
+  password: blog        # = project name
+  root_password: root   # admin login is root / root
 ```
 
-`root_password` is used by `db:backup` to run `mysqldump` as root.
+So for a project `blog` you can connect as **`blog` / `blog`** (normal use) or
+**`root` / `root`** (admin: create/drop databases). `root_password` is also used
+by `db:backup` to run `mysqldump` as root.
+
+> **MySQL/MariaDB note:** those engines auto-create `root`, so if you set the
+> `user` to `root` PHPBox won't try to re-create it — it just applies the root
+> password. Postgres creates whatever `user` you specify (including `root`).
 
 ## phpMyAdmin
 
-For MySQL/MariaDB, enable a web UI:
+phpMyAdmin is **enabled by default** for Laravel, CodeIgniter, WordPress, and
+Core PHP (and you can enable it anywhere):
 
 ```bash
 phpbox phpmyadmin enable
@@ -56,6 +64,7 @@ phpbox start
 # → http://localhost:8081  (PMA_HOST=db is configured automatically)
 ```
 
+Log in with your project credentials (`blog` / `blog`) or `root` / `root`.
 phpMyAdmin is ignored when the engine is SQLite.
 
 ## Backup & restore

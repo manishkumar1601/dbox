@@ -36,16 +36,16 @@ database:
   engine: mariadb        # mariadb | mysql | postgres | sqlite
   version: "11"
   name: blog
-  user: blog
-  password: secret
-  root_password: root
+  user: blog             # defaults to the project name
+  password: blog         # defaults to the project name
+  root_password: root    # admin login is always root / root
 
 services:
-  redis: true
+  redis: false
   mailpit: true
   meilisearch: false
   elasticsearch: false
-  phpmyadmin: false
+  phpmyadmin: true
 
 ssl:
   enabled: false
@@ -98,16 +98,24 @@ ports:
 |---|---|---|---|
 | `engine` | string | `mariadb` | `mariadb`, `mysql`, `postgres`, or `sqlite`. |
 | `version` | string | `11` | Image tag for the engine. |
-| `name` | string | `app` | Database name. |
-| `user` | string | `app` | Application database user. |
-| `password` | string | `secret` | Password for `user`. |
-| `root_password` | string | `root` | Root/superuser password (used by `db:backup`). |
+| `name` | string | project name | Database name. |
+| `user` | string | project name | Application database user. |
+| `password` | string | project name | Password for `user`. |
+| `root_password` | string | `root` | Root/superuser password (admin login is `root` / `root`). |
 
+> `phpbox create <fw> <name>` / `phpbox init` set `name`, `user`, and
+> `password` all to the project name. So a project called `blog` gets database
+> `blog`, user `blog`, password `blog` — plus the `root` / `root` admin login.
+>
 > SQLite uses no container — store the database file in your project.
 
 ### `services`
 
-Booleans that add or remove companion containers. See [services.md](services.md).
+Booleans that add or remove companion containers. The "Default" column is the
+raw field default; on `create`/`init` each **framework enables a sensible set**
+on top of this (e.g. Laravel turns on Mailpit + phpMyAdmin) — see
+[frameworks.md](frameworks.md#default-services-per-framework) and
+[services.md](services.md).
 
 | Key | Default | Service |
 |---|---|---|

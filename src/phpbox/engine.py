@@ -56,8 +56,16 @@ def run_once(
 
     Used for project scaffolding before the stack is brought up. ``env`` is
     injected into the container with ``-e`` (e.g. Composer auth tokens).
+
+    A global ``phpbox-composer-cache`` volume is mounted so Composer downloads
+    are reused across every project — making repeat ``phpbox create`` runs much
+    faster.
     """
-    args = ["run", "--rm"]
+    args = [
+        "run", "--rm",
+        "-v", "phpbox-composer-cache:/tmp/phpbox-composer",
+        "-e", "COMPOSER_CACHE_DIR=/tmp/phpbox-composer",
+    ]
     for key, value in (env or {}).items():
         args += ["-e", f"{key}={value}"]
     args += [service, "sh", "-lc", shell_command]

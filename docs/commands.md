@@ -18,7 +18,8 @@ See [frameworks.md](frameworks.md) for valid `<framework>` values.
 ### `phpbox start [--build | --no-build]`
 Regenerate `.phpbox/` and start the containers. Builds images first by default
 (`--no-build` skips the rebuild). Generates a TLS certificate first if SSL is
-enabled and none exists. Prints the resulting URLs.
+enabled and none exists. Prints a summary with service URLs **and** the database
+credentials (host, name, username, password, root login, connection string).
 
 ### `phpbox stop`
 Stop containers, preserving them and their data.

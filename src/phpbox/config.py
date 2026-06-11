@@ -52,7 +52,7 @@ class DatabaseConfig:
     version: str = "11"
     name: str = "app"
     user: str = "app"
-    password: str = "secret"
+    password: str = "app"
     root_password: str = "root"
 
 

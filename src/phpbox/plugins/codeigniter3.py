@@ -8,6 +8,9 @@ class CodeIgniter3Plugin(FrameworkPlugin):
     label = "CodeIgniter 3"
     document_root = "/"
     priority = 40  # lower: CI4 markers are more specific, check it first
+    # CI 3.1.x emits E_DEPRECATED "dynamic property" notices on PHP 8.2+,
+    # so default to 8.1 (the newest PHP it cleanly supports).
+    php_version = "8.1"
     detection = DetectionRule(
         files=("application/config/config.php", "system/core/CodeIgniter.php"),
     )

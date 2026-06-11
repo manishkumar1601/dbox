@@ -72,14 +72,19 @@ phpbox start
 App config: `ELASTICSEARCH_HOST=http://elasticsearch:9200`. Recommended (and
 auto-enabled) for Magento.
 
-## Framework recommendations
+## Framework defaults
 
-`phpbox init` / `phpbox create` enable services a framework typically wants:
+`phpbox init` / `phpbox create` enable a sensible set of services per framework:
 
 | Framework | Auto-enabled |
 |---|---|
-| Laravel | Redis, Mailpit |
-| Symfony | Mailpit |
-| Magento | Redis, Elasticsearch |
+| Laravel | Mailpit, phpMyAdmin |
+| CodeIgniter 3 & 4 | Mailpit, phpMyAdmin |
+| WordPress | Mailpit, phpMyAdmin |
+| Core PHP | Mailpit, phpMyAdmin |
+| Symfony | Mailpit, phpMyAdmin |
+| Magento | Elasticsearch, phpMyAdmin |
+| CakePHP, Yii, Slim, Laminas, Drupal, Joomla | (none) |
 
-You can always toggle them afterwards.
+Redis is **off by default everywhere** — enable it per project with
+`phpbox redis enable`. You can toggle any service afterwards.

@@ -82,7 +82,11 @@ def detect(project_dir: Path) -> Detection:
     plugin = plugins.detect(project_dir)
     composer = _read_composer(project_dir)
 
-    php_version = _php_from_composer(composer) or "8.3"
+    php_version = (
+        _php_from_composer(composer)
+        or (plugin.php_version if plugin else None)
+        or "8.3"
+    )
 
     extensions: list[str] = []
     if plugin:

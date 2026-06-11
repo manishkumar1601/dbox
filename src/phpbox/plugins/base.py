@@ -51,6 +51,9 @@ class FrameworkPlugin:
     detection: DetectionRule = DetectionRule()
     #: scoring weight — higher wins when several plugins match
     priority: int = 50
+    #: preferred PHP version when the project doesn't pin one (e.g. legacy
+    #: frameworks that aren't compatible with the latest PHP). None = default.
+    php_version: str | None = None
 
     # ---- detection -----------------------------------------------------
 

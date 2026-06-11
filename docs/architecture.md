@@ -97,6 +97,13 @@ database:
 All services share a project-scoped bridge network named `phpbox`, and your
 application source is bind-mounted into every container at `/var/www/html`.
 
+> **The PHP process runs as `root` inside the container.** This is deliberate:
+> Windows/macOS Docker bind mounts expose host files with ownership that a
+> non-root user often can't write to, which breaks frameworks that write to
+> disk (Laravel's `storage/`, Symfony's `var/`, …). Running as root sidesteps
+> all bind-mount permission issues. It's a local dev environment, so this is an
+> acceptable trade-off.
+
 ## Why shell out to `docker compose`?
 
 Rather than the Docker SDK, PHPBox invokes the `docker compose` CLI. This means:

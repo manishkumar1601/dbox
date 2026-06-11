@@ -72,10 +72,11 @@ class MagentoPlugin(FrameworkPlugin):
 
     def post_create_note(self) -> str | None:
         return (
-            "Code installed. Finish the install once containers are up:\n"
+            "Code installed. Finish the install once containers are up\n"
+            "(db-name is your project name; root / root always works as the DB login):\n"
             "    phpbox magento setup:install \\\n"
-            "      --base-url=http://localhost --db-host=db --db-name=magento \\\n"
-            "      --db-user=magento --db-password=secret \\\n"
+            "      --base-url=http://localhost --db-host=db --db-name=<project> \\\n"
+            "      --db-user=root --db-password=root \\\n"
             "      --search-engine=elasticsearch7 --elasticsearch-host=elasticsearch \\\n"
             "      --admin-firstname=Admin --admin-lastname=User \\\n"
             "      --admin-email=admin@example.com --admin-user=admin --admin-password=Admin123!"
