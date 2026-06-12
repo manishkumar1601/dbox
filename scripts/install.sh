@@ -2,23 +2,21 @@
 #
 # PHPBox installer (Linux / macOS)
 #
-# Installs PHPBox so the `phpbox` command works anywhere on your system.
-# The install is NON-editable (the package + templates are copied into an
-# isolated location), so you can safely delete this cloned repository afterward.
+# Installs the latest PHPBox straight from GitHub — no clone required. Run it
+# directly or pipe it in:
+#
+#   curl -fsSL https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.sh | bash
 #
 # Missing prerequisites are installed automatically where possible:
 #   * Python 3.12+  (required to run the PHPBox CLI)
 #   * Docker        (required only when you `phpbox start` a project)
 #
-# Usage:
-#   ./scripts/install.sh                # install (+ deps via pipx)
-#   ./scripts/install.sh --pip          # use `pip install --user` instead of pipx
-#   ./scripts/install.sh --skip-deps    # don't try to install Python/Docker
+# Flags (when run as a file): --pip (use pip), --skip-deps (don't install Python/Docker)
 #
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+# Latest PHPBox, as a GitHub source tarball (no git / clone needed).
+SPEC="https://github.com/manishkumar1601/phpbox/archive/refs/heads/master.tar.gz"
 USE_PIP=0
 SKIP_DEPS=0
 for arg in "$@"; do
@@ -90,7 +88,7 @@ install_docker() {
   fi
 }
 
-bold "Installing PHPBox from: $REPO_ROOT"
+bold "Installing the latest PHPBox from GitHub..."
 
 # === 1. Ensure Python ====================================================
 PY="$(find_python || true)"
@@ -111,7 +109,7 @@ echo "Using $PY ($("$PY" -c 'import sys;print("%d.%d"%sys.version_info[:2])'))"
 # === 2. Install PHPBox ===================================================
 if [ "$USE_PIP" -eq 1 ]; then
   bold "Installing PHPBox with pip (--user)..."
-  "$PY" -m pip install --user --upgrade "$REPO_ROOT"
+  "$PY" -m pip install --user --upgrade "$SPEC"
   HINT="Make sure your Python user scripts directory is on your PATH."
 else
   if ! "$PY" -m pipx --version >/dev/null 2>&1; then
@@ -120,7 +118,7 @@ else
     "$PY" -m pipx ensurepath
   fi
   bold "Installing PHPBox with pipx..."
-  "$PY" -m pipx install --force "$REPO_ROOT"
+  "$PY" -m pipx install --force "$SPEC"
   HINT="pipx put 'phpbox' on your PATH."
 fi
 
@@ -145,4 +143,3 @@ green "✓ PHPBox installed."
 echo "$HINT"
 [ -n "$DOCKER_NOTE" ] && yellow "$DOCKER_NOTE"
 echo "Open a NEW terminal, then run:  phpbox --help"
-echo "You can now safely delete this cloned repository."

@@ -23,23 +23,23 @@ phpbox start
 
 ## Install
 
-### Recommended: clone, run the install script, done
+### One line — no clone needed
 
-The install script **installs everything you need**: if Python or Docker are
-missing, it installs them (via `winget` on Windows, Homebrew/apt on macOS/Linux),
-then installs PHPBox itself as a **global, isolated** tool (via `pipx`) so the
-`phpbox` command works in **any folder**. Because nothing is installed
-"editable", **you can delete the cloned repo afterwards.**
+The installer pulls the **latest PHPBox straight from GitHub** and, if Python or
+Docker are missing, installs them too (via `winget` on Windows, Homebrew/apt on
+macOS/Linux). It installs PHPBox as a **global, isolated** tool (via `pipx`) so
+`phpbox` works in **any folder**.
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.ps1 | iex
+```
+
+**macOS / Linux:**
 
 ```bash
-git clone https://github.com/manishkumar1601/phpbox
-cd phpbox
-
-# Linux / macOS
-./scripts/install.sh
-
-# Windows (PowerShell)
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+curl -fsSL https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.sh | bash
 ```
 
 Then open a **new terminal** and:
@@ -47,19 +47,14 @@ Then open a **new terminal** and:
 ```bash
 phpbox --help
 phpbox doctor          # checks Docker is installed and running
-
-cd ..
-rm -rf phpbox          # ✅ safe — the clone is no longer needed
 ```
 
 > ⚠️ **Docker Desktop needs a reboot + manual first launch** before your first
 > `phpbox start` (no installer can start the Docker engine for you). The script
 > installs it and reminds you.
 >
-> Flags: `-SkipDeps` / `--skip-deps` to skip installing Python/Docker;
-> `-Pip` / `--pip` to use `pip` instead of `pipx`.
-> Uninstall any time by running **`phpbox uninstall`** (or the
-> `scripts/uninstall.*` scripts).
+> Update any time with **`phpbox update`**, and remove it with
+> **`phpbox uninstall`**. PHPBox also tells you when a newer version is available.
 
 > 📖 Full fresh-PC walkthrough and troubleshooting:
 > **[docs/installation.md → First-time setup on a fresh PC](docs/installation.md#first-time-setup-on-a-fresh-pc)**.
@@ -150,6 +145,7 @@ phpbox/                     repo root
 | `phpbox db:backup` · `phpbox db:restore <file>` | Database backups |
 | `phpbox export` · `phpbox import <zip>` | Portable project packages |
 | `phpbox detect` · `phpbox doctor` | Inspect / diagnose |
+| `phpbox update` | Update PHPBox to the latest version from GitHub |
 | `phpbox uninstall` | Remove PHPBox from your system |
 | `phpbox artisan\|spark\|wp\|cake\|console\|yii\|drush\|magento\|joomla …` | Framework CLIs |
 

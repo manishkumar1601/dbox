@@ -17,7 +17,7 @@ from pathlib import Path
 
 import typer
 
-from phpbox import __version__, certs, config, detection, engine, extensions, generator, plugins
+from phpbox import __version__, certs, config, detection, engine, extensions, generator, plugins, updater
 from phpbox.config import (
     SUPPORTED_DB,
     SUPPORTED_PHP,
@@ -41,6 +41,24 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
 )
+
+
+@app.callback()
+def _root(ctx: typer.Context) -> None:
+    """Runs before every command: show a one-line notice if a newer PHPBox is
+    available (from cache — instant), then refresh that cache in the background."""
+    try:
+        if ctx.invoked_subcommand not in ("update", "version", "uninstall"):
+            latest = updater.cached_latest()
+            if latest:
+                warn(
+                    f"PHPBox {latest} is available (you have {updater.current_version()}). "
+                    "Run `phpbox update`."
+                )
+        updater.maybe_refresh_async()
+    except Exception:
+        pass  # never let the update check break a command
+
 
 PASSTHROUGH_CTX = {"allow_extra_args": True, "ignore_unknown_options": True}
 
@@ -222,29 +240,40 @@ def _run_framework(ctx: typer.Context, prefix: list[str]) -> None:
 
 @app.command()
 def version() -> None:
-    """Show the PHPBox version."""
+    """Show the PHPBox version (and whether an update is available)."""
     console.print(f"PHPBox {__version__}")
+    try:
+        latest = updater.cached_latest()
+        if latest:
+            info(f"Update available: {latest} — run `phpbox update`")
+        updater.maybe_refresh_async()
+    except Exception:
+        pass
+
+
+def _install_method() -> str:
+    """Whether PHPBox was installed via pipx or pip."""
+    prefix = Path(sys.prefix)
+    parts = [p.lower() for p in prefix.parts]
+    if prefix.name.lower() == "phpbox" and ("pipx" in parts or "venvs" in parts):
+        return "pipx"
+    return "pip"
+
+
+def _pipx_base() -> list[str] | None:
+    """Command prefix to invoke pipx, or None if it can't be found."""
+    pipx = shutil.which("pipx")
+    if pipx:
+        return [pipx]
+    base = shutil.which("python") or shutil.which("python3")
+    return [base, "-m", "pipx"] if base else None
 
 
 def _detect_install() -> tuple[str, list[str] | None]:
-    """Figure out how PHPBox was installed and the command to remove it.
-
-    Returns (method, argv). ``argv`` is None if we couldn't build a command.
-    """
-    prefix = Path(sys.prefix)
-    parts = [p.lower() for p in prefix.parts]
-    is_pipx = prefix.name.lower() == "phpbox" and ("pipx" in parts or "venvs" in parts)
-
-    if is_pipx:
-        pipx = shutil.which("pipx")
-        if pipx:
-            return "pipx", [pipx, "uninstall", "phpbox"]
-        base = shutil.which("python") or shutil.which("python3")
-        if base:
-            return "pipx", [base, "-m", "pipx", "uninstall", "phpbox"]
-        return "pipx", None
-
-    # pip (user / system / editable dev install)
+    """Return (method, uninstall-argv). ``argv`` is None if it can't be built."""
+    if _install_method() == "pipx":
+        base = _pipx_base()
+        return "pipx", (base + ["uninstall", "phpbox"]) if base else None
     return "pip", [sys.executable, "-m", "pip", "uninstall", "-y", "phpbox"]
 
 
@@ -293,6 +322,37 @@ def uninstall(
         success("PHPBox uninstalled.")
     else:
         error("Uninstall failed. Try manually:  pipx uninstall phpbox  /  pip uninstall phpbox")
+    raise typer.Exit(code)
+
+
+@app.command()
+def update() -> None:
+    """Update PHPBox to the latest version from GitHub."""
+    if _install_method() == "pipx":
+        base = _pipx_base()
+        if base is None:
+            error("Couldn't find pipx. Update manually:")
+            info(f"  pipx install --force {updater.INSTALL_SPEC}")
+            raise typer.Exit(1)
+        argv = base + ["install", "--force", updater.INSTALL_SPEC]
+    else:
+        argv = [sys.executable, "-m", "pip", "install", "--upgrade", updater.INSTALL_SPEC]
+
+    step(f"Updating PHPBox (current: {updater.current_version()}) from GitHub…")
+    updater.clear_cache()  # drop the "update available" notice
+
+    if os.name == "nt":
+        # Windows locks the running executable — defer to a detached helper.
+        _spawn_delayed_windows(argv)
+        success("PHPBox is updating.")
+        info("This terminal's `phpbox` stops working for a moment; open a new one to use the new version.")
+        raise typer.Exit(0)
+
+    code = subprocess.run(argv).returncode
+    if code == 0:
+        success("PHPBox updated. Run `phpbox version` to confirm.")
+    else:
+        error(f"Update failed. Try manually:  pipx install --force {updater.INSTALL_SPEC}")
     raise typer.Exit(code)
 
 

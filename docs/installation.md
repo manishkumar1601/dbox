@@ -6,34 +6,30 @@
 
 ## First-time setup on a fresh PC
 
-The install script **bootstraps its own prerequisites** — if Python or Docker
-are missing, it installs them for you (via `winget` on Windows, Homebrew/apt on
-macOS/Linux). So a fresh machine is essentially: *clone → run the script*.
+One command installs the **latest PHPBox from GitHub** — no clone needed — and
+**bootstraps its own prerequisites**: if Python or Docker are missing it
+installs them for you (via `winget` on Windows, Homebrew/apt on macOS/Linux).
 
-### Step 1 — Clone and run the install script
+### Step 1 — Run the one-line installer
 
 ```powershell
 # Windows (PowerShell)
-git clone https://github.com/manishkumar1601/phpbox
-cd phpbox
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+irm https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.ps1 | iex
 ```
 
 ```bash
 # macOS / Linux
-git clone https://github.com/manishkumar1601/phpbox
-cd phpbox
-./scripts/install.sh
+curl -fsSL https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.sh | bash
 ```
 
-The script will, in order:
+The installer will, in order:
 
 1. **Ensure Python 3.12+** — required to run the PHPBox CLI. Installed
    automatically if missing (`winget install Python.Python.3.12` / `brew` /
-   apt-dnf-pacman). The script then refreshes PATH and continues.
+   apt-dnf-pacman), then refreshes PATH and continues.
 2. **Install PHPBox** — a global, isolated install via
-   [pipx](https://pipx.pypa.io/) (set up for you if needed), so `phpbox` works
-   in **any folder**. The install is *non-editable*, so the clone is disposable.
+   [pipx](https://pipx.pypa.io/) (set up for you if needed), pulled from the
+   GitHub source tarball, so `phpbox` works in **any folder**.
 3. **Ensure Docker** — required only when you *run* a project. Installed
    automatically if missing (`winget install Docker.DockerDesktop` /
    `brew install --cask docker` / Docker's official Linux script).
@@ -41,14 +37,12 @@ The script will, in order:
 > ⚠️ **Docker Desktop needs a reboot + first launch.** No installer can start
 > the Docker engine for you: after Docker Desktop is installed you must
 > **reboot, then open Docker Desktop once** (accept the license) and wait until
-> it says *running*. The script will remind you. This is only needed before your
-> first `phpbox start` — installing PHPBox itself doesn't require Docker.
+> it says *running*. The installer will remind you. This is only needed before
+> your first `phpbox start` — installing PHPBox itself doesn't require Docker.
 
-> **Don't want auto-install of Python/Docker?** Pass `-SkipDeps`
-> (`scripts\install.ps1 -SkipDeps`) or `--skip-deps`
-> (`./scripts/install.sh --skip-deps`) to install only PHPBox.
->
-> **Prefer `pip` over `pipx`?** Pass `-Pip` / `--pip`.
+> **Running the script as a file** (e.g. from a clone) instead of piping it? You
+> can pass flags: `--skip-deps` (`-SkipDeps`) to skip installing Python/Docker,
+> or `--pip` (`-Pip`) to use `pip` instead of `pipx`.
 
 ### Step 2 — Open a new terminal and verify
 
@@ -59,13 +53,6 @@ phpbox doctor      # confirms Docker is installed and running
 
 > A **new** terminal is required so the updated PATH (from pipx / a fresh Python
 > install) is picked up.
-
-You no longer need the clone:
-
-```powershell
-cd ..
-Remove-Item -Recurse -Force phpbox      # macOS/Linux: rm -rf phpbox
-```
 
 ### Step 3 — Create a new project **or** run an existing one
 
@@ -179,6 +166,25 @@ Output:
 > The `--add-data` flag bundles the Jinja2 templates into the binary. The path
 > separator is `:` on Linux/macOS and `;` on Windows
 > (`--add-data "src/phpbox/templates;phpbox/templates"`).
+
+## Updating
+
+PHPBox checks GitHub for new versions in the background (at most once a day) and
+shows a one-line notice on commands when an update is available. Apply it with:
+
+```bash
+phpbox update
+```
+
+This reinstalls the latest from GitHub using the same method you installed with
+(pipx or pip). On Windows the update completes a moment after the command exits
+(a running program can't replace its own files) — open a new terminal to use the
+new version. Check what you're on with `phpbox version`.
+
+> **Versioning:** the installed version is `phpbox.__version__`; the update
+> check compares it against the version on the `master` branch. Bump
+> `__version__` (in `src/phpbox/__init__.py` and `pyproject.toml`) when you cut a
+> release so users are notified.
 
 ## Uninstall
 

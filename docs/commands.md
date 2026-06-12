@@ -51,7 +51,17 @@ framework detected, PHP version supported, containers running, database/Redis
 services up, recommended extensions present, SSL configured.
 
 ### `phpbox version`
-Print the PHPBox version.
+Print the installed PHPBox version (and note if a newer one is available).
+
+### `phpbox update`
+Update PHPBox to the latest version from GitHub (same source the installer
+uses). Detects whether you installed via pipx or pip. PHPBox checks GitHub for
+new versions in the background (at most once a day) and prints a one-line notice
+on commands when an update is available; this command applies it.
+
+> On Windows the update finishes a moment after the command exits (a running
+> program can't replace its own files) — open a new terminal to use the new
+> version.
 
 ### `phpbox uninstall [--yes | -y]`
 Remove PHPBox from your system. It detects how PHPBox was installed (pipx or

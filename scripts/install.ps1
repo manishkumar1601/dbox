@@ -3,10 +3,10 @@
     PHPBox installer (Windows).
 
 .DESCRIPTION
-    Installs PHPBox so the `phpbox` command works anywhere on your system.
-    The install is NON-editable (the package + templates are copied into an
-    isolated location), so you can safely delete this cloned repository
-    afterward.
+    Installs the latest PHPBox straight from GitHub — no clone required. Run it
+    directly or pipe it in:
+
+        irm https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.ps1 | iex
 
     Missing prerequisites are installed automatically via winget:
       * Python 3.12+  (required to run the PHPBox CLI)
@@ -17,11 +17,6 @@
 
 .PARAMETER SkipDeps
     Do not attempt to install Python / Docker; only install PHPBox.
-
-.EXAMPLE
-    powershell -ExecutionPolicy Bypass -File scripts\install.ps1
-    powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -SkipDeps
-    powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Pip
 #>
 param(
     [switch]$Pip,
@@ -32,19 +27,19 @@ param(
 # which PowerShell would otherwise treat as terminating errors. We check exit
 # codes ($LASTEXITCODE) explicitly instead.
 $ErrorActionPreference = "Continue"
-$RepoRoot = Split-Path -Parent $PSScriptRoot
+
+# Latest PHPBox, as a GitHub source tarball (no git / clone needed).
+$Spec = "https://github.com/manishkumar1601/phpbox/archive/refs/heads/master.tar.gz"
 
 function Test-Have($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
 
 function Update-PathFromRegistry {
-    # Pick up PATH changes made by an installer in the current session.
     $machine = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
     $user = [System.Environment]::GetEnvironmentVariable('Path', 'User')
     $env:Path = (@($machine, $user) | Where-Object { $_ }) -join ';'
 }
 
 function Get-Python {
-    # Return the name of a Python >= 3.12 on PATH, or $null.
     foreach ($c in @("python", "python3", "py")) {
         if (Test-Have $c) {
             $ok = & $c -c "import sys;print(1 if sys.version_info[:2]>=(3,12) else 0)" 2>$null
@@ -54,7 +49,7 @@ function Get-Python {
     return $null
 }
 
-Write-Host "Installing PHPBox from: $RepoRoot" -ForegroundColor Cyan
+Write-Host "Installing the latest PHPBox from GitHub..." -ForegroundColor Cyan
 
 # === 1. Ensure Python (needed to install + run PHPBox) ===================
 $py = Get-Python
@@ -74,7 +69,7 @@ if (-not $py) {
     if (-not $py) {
         Write-Host "Could not install Python automatically." -ForegroundColor Red
         Write-Host "Install it from https://www.python.org/downloads/ (tick 'Add Python to PATH'),"
-        Write-Host "open a NEW terminal, and re-run this script."
+        Write-Host "open a NEW terminal, and re-run this command."
         exit 1
     }
 }
@@ -84,21 +79,20 @@ Write-Host "Using $py (Python $ver)" -ForegroundColor Green
 # === 2. Install PHPBox ===================================================
 if ($Pip) {
     Write-Host "Installing PHPBox with pip (--user)..." -ForegroundColor Cyan
-    & $py -m pip install --user --upgrade "$RepoRoot"
+    & $py -m pip install --user --upgrade "$Spec"
     $hint = "Make sure your Python user Scripts directory is on your PATH."
 }
 else {
-    # Installing pipx is idempotent (fast no-op if present) — avoids fragile
-    # "is it installed?" probing that breaks under strict error handling.
+    # Installing pipx is idempotent (fast no-op if present).
     Write-Host "Ensuring pipx is available..." -ForegroundColor Cyan
     & $py -m pip install --user --upgrade pipx
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Could not install pipx. Try the pip method:  scripts\install.ps1 -Pip" -ForegroundColor Red
+        Write-Host "Could not install pipx. Try the pip method (-Pip)." -ForegroundColor Red
         exit 1
     }
     & $py -m pipx ensurepath | Out-Null
     Write-Host "Installing PHPBox with pipx..." -ForegroundColor Cyan
-    & $py -m pipx install --force "$RepoRoot"
+    & $py -m pipx install --force "$Spec"
     $hint = "pipx put 'phpbox' on your PATH."
 }
 if ($LASTEXITCODE -ne 0) {
@@ -141,4 +135,3 @@ Write-Host "PHPBox installed." -ForegroundColor Green
 Write-Host $hint
 if ($dockerNote) { Write-Host $dockerNote -ForegroundColor Yellow }
 Write-Host "Open a NEW terminal, then run:  phpbox --help"
-Write-Host "You can now safely delete this cloned repository."

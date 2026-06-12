@@ -278,6 +278,24 @@ def test_allocate_no_collisions():
     assert len(set(chosen.values())) == 3
 
 
+def test_updater_version_compare():
+    from phpbox import updater
+
+    assert updater.is_newer("0.3.0", "0.2.0")
+    assert updater.is_newer("0.2.1", "0.2.0")
+    assert updater.is_newer("1.0.0", "0.9.9")
+    assert not updater.is_newer("0.2.0", "0.2.0")
+    assert not updater.is_newer("0.1.0", "0.2.0")
+
+
+def test_updater_parses_version():
+    from phpbox import updater
+
+    assert updater._parse_version('__version__ = "1.2.3"') == "1.2.3"
+    assert updater._parse_version("__version__ = '0.9.0'") == "0.9.0"
+    assert updater._parse_version("nothing here") is None
+
+
 def test_find_free_skips_taken_ports():
     from phpbox.ports import find_free
 
