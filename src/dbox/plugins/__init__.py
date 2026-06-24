@@ -4,21 +4,28 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from dbox.plugins.actix import ActixPlugin
+from dbox.plugins.axum import AxumPlugin
 from dbox.plugins.base import FrameworkPlugin
 from dbox.plugins.cakephp import CakePhpPlugin
 from dbox.plugins.codeigniter import CodeIgniter4Plugin
 from dbox.plugins.codeigniter3 import CodeIgniter3Plugin
 from dbox.plugins.corephp import CorePhpPlugin
 from dbox.plugins.drupal import DrupalPlugin
+from dbox.plugins.echo import EchoPlugin
+from dbox.plugins.gin import GinPlugin
+from dbox.plugins.go import GoPlugin
 from dbox.plugins.joomla import JoomlaPlugin
 from dbox.plugins.laravel import LaravelPlugin
 from dbox.plugins.magento import MagentoPlugin
+from dbox.plugins.rust import RustPlugin
 from dbox.plugins.symfony import SymfonyPlugin
 from dbox.plugins.wordpress import WordPressPlugin
 from dbox.plugins.yii import YiiPlugin
 
 # Order is not significant; selection uses the `priority` attribute.
 _PLUGIN_CLASSES = [
+    # PHP
     LaravelPlugin,
     SymfonyPlugin,
     CodeIgniter4Plugin,
@@ -30,6 +37,14 @@ _PLUGIN_CLASSES = [
     MagentoPlugin,
     JoomlaPlugin,
     CorePhpPlugin,
+    # Go
+    GinPlugin,
+    EchoPlugin,
+    GoPlugin,
+    # Rust
+    ActixPlugin,
+    AxumPlugin,
+    RustPlugin,
 ]
 
 REGISTRY: dict[str, FrameworkPlugin] = {cls.name: cls() for cls in _PLUGIN_CLASSES}

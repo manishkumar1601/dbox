@@ -77,6 +77,7 @@ dbox down -v
 | To add… | Touch… |
 |---|---|
 | A framework | `plugins/<name>.py` + registry — see [plugins.md](plugins.md) |
+| A language runtime | `config.py` (`SUPPORTED_RUNTIMES` + a new `<lang>Config`), a base plugin with `runtime="<lang>"`, `templates/<lang>/Dockerfile.j2`, a `{% if runtime == '<lang>' %}` block in `docker-compose.yml.j2`, dispatch in `generator.py`, and an entry in `engine.APP_SERVICE_BY_RUNTIME` |
 | An extension | `extensions.py` (metadata) |
 | A service | `templates/docker-compose.yml.j2`, `config.py` (`ServicesConfig`), `cli.py` toggle |
 | A web server | `generator.py` (image + render), a template, `config.py` `SUPPORTED_SERVERS` |

@@ -143,20 +143,27 @@ Package the project into `dbox-package.zip`, excluding `.git`, `node_modules`,
 ### `dbox import <file.zip>`
 Unpack a package into the current directory. Follow with `dbox start`.
 
-## Framework CLIs
+## Framework / language CLIs
 
-Each runs the framework's native tool inside the PHP container:
+Each runs the toolchain inside the app container (`php` service for PHP,
+`app` service for Go/Rust):
 
-| Command | Runs in container |
-|---|---|
-| `dbox artisan <args…>` | `php artisan …` (Laravel) |
-| `dbox spark <args…>` | `php spark …` (CodeIgniter 4) |
-| `dbox wp <args…>` | `wp --allow-root …` (WordPress) |
-| `dbox cake <args…>` | `bin/cake …` (CakePHP) |
-| `dbox console <args…>` | `php bin/console …` (Symfony) |
-| `dbox yii <args…>` | `php yii …` (Yii) |
-| `dbox drush <args…>` | `vendor/bin/drush …` (Drupal) |
-| `dbox magento <args…>` | `php bin/magento …` (Magento) |
-| `dbox joomla <args…>` | `php cli/joomla.php …` (Joomla) |
+| Command | Runs in container | Runtime |
+|---|---|---|
+| `dbox artisan <args…>` | `php artisan …` | PHP (Laravel) |
+| `dbox spark <args…>` | `php spark …` | PHP (CodeIgniter 4) |
+| `dbox wp <args…>` | `wp --allow-root …` | PHP (WordPress) |
+| `dbox cake <args…>` | `bin/cake …` | PHP (CakePHP) |
+| `dbox console <args…>` | `php bin/console …` | PHP (Symfony) |
+| `dbox yii <args…>` | `php yii …` | PHP (Yii) |
+| `dbox drush <args…>` | `vendor/bin/drush …` | PHP (Drupal) |
+| `dbox magento <args…>` | `php bin/magento …` | PHP (Magento) |
+| `dbox joomla <args…>` | `php cli/joomla.php …` | PHP (Joomla) |
+| `dbox composer <args…>` | `composer …` | PHP |
+| **`dbox go <args…>`** | `go …` (`go mod tidy`, `go test ./...`, …) | Go |
+| **`dbox cargo <args…>`** | `cargo …` (`cargo build`, `cargo test`, …) | Rust |
 
 Unknown flags are passed straight through (e.g. `dbox artisan migrate --force`).
+
+> PHP-only commands (`dbox composer`, `dbox php use`, `dbox ext …`) refuse to
+> run on Go/Rust projects with a clear error.

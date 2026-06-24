@@ -47,15 +47,18 @@ parts are `.dbox/data/` (database files) and `.dbox/backups/`.
 ```
 .dbox/
 ├── docker-compose.yml          # the whole stack
-├── php/
+├── php/                        # PHP runtime only
 │   ├── Dockerfile              # FROM php:<ver>-fpm (or -apache), extensions, composer
 │   └── php.ini                 # rendered from php.ini in dbox.yml
-├── nginx/default.conf          # when server = nginx
-├── caddy/Caddyfile             # when server = caddy
-├── litespeed/                  # when server = litespeed
+├── app/                        # Go / Rust runtimes only
+│   ├── Dockerfile              # FROM golang:<ver>-bookworm or rust:<ver>-bookworm
+│   └── .air.toml               # live-reload config (Go only)
+├── nginx/default.conf          # when server = nginx           (PHP)
+├── caddy/Caddyfile             # when server = caddy           (PHP)
+├── litespeed/                  # when server = litespeed       (PHP)
 │   ├── httpd_config.conf
 │   └── vhconf.conf
-├── apache/ssl.conf             # when server = apache and ssl enabled
+├── apache/ssl.conf             # when server = apache and ssl enabled (PHP)
 ├── env/.env                    # connection details for your app's .env
 ├── certs/                      # cert.pem / key.pem when ssl enabled
 ├── data/{mariadb,mysql,postgres}/   # persistent DB storage (bind mounts)
@@ -82,8 +85,10 @@ parts are `.dbox/data/` (database files) and `.dbox/backups/`.
 
 ## Container topology
 
-DBox favours **separate containers** for the web server, PHP runtime, and
-database:
+The topology depends on the project's `runtime`. See [runtimes.md](runtimes.md)
+for a side-by-side comparison.
+
+**PHP runtime** — DBox favours separate containers for web, PHP, and database:
 
 * `php` — PHP-FPM, built from the generated Dockerfile (your extensions live here).
 * `web` — nginx / Caddy / OpenLiteSpeed, talking to `php` over FastCGI on port 9000.
@@ -91,11 +96,18 @@ database:
 * optional: `redis`, `mailpit`, `phpmyadmin`, `meilisearch`, `elasticsearch`.
 
 **Apache is the exception:** it runs as `php:<ver>-apache` (mod_php) in the
-`php` container itself, so there is no separate `web` container. See
-[web-servers.md](web-servers.md) for the reasoning.
+`php` container itself, so there is no separate `web` container.
 
-All services share a project-scoped bridge network named `dbox`, and your
-application source is bind-mounted into every container at `/var/www/html`.
+**Go / Rust runtime** — single self-serving app container, no separate web:
+
+* `app` — `golang:<ver>-bookworm` or `rust:<ver>-bookworm`, with `air` /
+  `cargo-watch` baked in for live reload. Container port (8080) maps directly
+  to `ports.app` on your host.
+* `db` and other services attach the same way as PHP.
+
+All services share a project-scoped bridge network named `dbox`. The
+application source is bind-mounted at `/var/www/html` (PHP) or `/app`
+(Go/Rust).
 
 > **The PHP process runs as `root` inside the container.** This is deliberate:
 > Windows/macOS Docker bind mounts expose host files with ownership that a

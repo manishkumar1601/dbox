@@ -68,11 +68,12 @@ ports:
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `name` | string | dir name | Project name; used for container names (`dbox-<name>-php`). |
+| `name` | string | dir name | Project name; used for container names. |
 | `framework` | string | `corephp` | One of the [supported frameworks](frameworks.md). |
-| `document_root` | string | `/public` | Web root relative to the app root. Becomes `/var/www/html<document_root>` in the container. |
+| `runtime` | string | `php` | Language runtime: `php` \| `go` \| `rust`. Omitted in the YAML when `php` for backward compat. |
+| `document_root` | string | `/public` | Web root relative to the app root (PHP only). |
 
-### `php`
+### `php` (PHP runtime only)
 
 | Key | Type | Default | Description |
 |---|---|---|---|
@@ -80,11 +81,23 @@ ports:
 | `extensions` | list | `[gd, zip, intl, pdo_mysql, opcache]` | Extensions baked into the PHP image. See [extensions.md](extensions.md). |
 | `ini` | map | see example | Key/value pairs written to a `php.ini` overlay. Any php.ini directive is allowed. |
 
-### `composer`
+### `composer` (PHP runtime only)
 
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `version` | string | `latest` | Maps to a `composer:<version>` image tag (e.g. `2.8`). |
+
+### `go` (Go runtime only)
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `version` | string | `1.25` | One of `1.23`, `1.24`, `1.25`. Maps to `golang:<version>-bookworm`. |
+
+### `rust` (Rust runtime only)
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `version` | string | `stable` | One of `1.75`, `1.80`, `stable`. Maps to `rust:<version>-bookworm`. |
 
 ### `server`
 
@@ -140,16 +153,17 @@ Preferred **host** ports. On `init`/`create` these are auto-adjusted upward to
 avoid collisions with other running projects, so two DBox apps never fight
 over `8080`.
 
-| Key | Default | Maps to |
-|---|---|---|
-| `http` | `8080` | web :80 |
-| `https` | `8443` | web :443 (when SSL enabled) |
-| `database` | `3306` | db engine port |
-| `redis` | `6379` | redis :6379 |
-| `mailpit` | `8025` | mailpit web UI |
-| `phpmyadmin` | `8081` | phpMyAdmin :80 |
-| `meilisearch` | `7700` | meilisearch :7700 |
-| `elasticsearch` | `9200` | elasticsearch :9200 |
+| Key | Default | Maps to | Runtime |
+|---|---|---|---|
+| `http` | `7010` | web :80 | PHP |
+| `https` | `7020` | web :443 (when SSL enabled) | PHP |
+| `app` | `7090` | app container :8080 | Go / Rust |
+| `database` | `7030` | db engine port | all |
+| `redis` | `7040` | redis :6379 | all |
+| `mailpit` | `7050` | mailpit web UI | all |
+| `phpmyadmin` | `7060` | phpMyAdmin :80 | all |
+| `meilisearch` | `7070` | meilisearch :7700 | all |
+| `elasticsearch` | `7080` | elasticsearch :9200 | all |
 
 ## Editing by hand vs. commands
 

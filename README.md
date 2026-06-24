@@ -1,8 +1,8 @@
 # DBox
 
-**Universal PHP Development Environment Manager** — create and run any PHP
-framework or CMS with only Docker installed. No PHP, Composer, Apache, Nginx,
-MySQL, XAMPP/WAMP/MAMP/Laragon on your host.
+**Universal multi-language Development Environment Manager** — create and run
+**PHP, Go, and Rust** projects with only Docker installed. No PHP, Composer,
+Apache, Nginx, MySQL, Go, Rust, XAMPP/WAMP/MAMP/Laragon on your host.
 
 ```bash
 dbox create laravel blog      # scaffold a new project
@@ -88,10 +88,11 @@ dbox.yml      # the single source of truth — edit this
 .dbox/        # generated Docker artifacts (disposable, regenerated on start)
 ```
 
-`dbox.yml` is read by the **generator**, which renders a `docker-compose.yml`,
-a PHP `Dockerfile` (with your extensions), `php.ini`, and the web-server config.
-DBox then drives `docker compose` to build and run the stack. See
-[docs/architecture.md](docs/architecture.md) for the full picture.
+`dbox.yml` is read by the **generator**, which renders a `docker-compose.yml`
+plus a per-runtime `Dockerfile` (PHP with your extensions, or Go/Rust with
+live-reload tooling baked in) and any companion configs (`php.ini`, web-server
+config, `.air.toml`). DBox then drives `docker compose` to build and run the
+stack. See [docs/architecture.md](docs/architecture.md) for the full picture.
 
 It aims to **just work** out of the box: free ports are picked automatically
 (and re-checked on every start), the database connection is auto-wired for
@@ -147,14 +148,23 @@ dbox/                     repo root
 | `dbox detect` · `dbox doctor` | Inspect / diagnose |
 | `dbox update` | Update DBox to the latest version from GitHub |
 | `dbox uninstall` | Remove DBox from your system |
-| `dbox artisan\|spark\|wp\|cake\|console\|yii\|drush\|magento\|joomla …` | Framework CLIs |
+| `dbox artisan\|spark\|wp\|cake\|console\|yii\|drush\|magento\|joomla …` | PHP framework CLIs |
+| `dbox go …` · `dbox cargo …` | Go / Rust toolchains inside the container |
 
 Full reference: [docs/commands.md](docs/commands.md).
 
-## Supported frameworks
+## Supported languages and frameworks
 
-Laravel · Symfony · CodeIgniter 3 & 4 · CakePHP · Yii · Core PHP ·
-WordPress · Drupal · Magento · Joomla
+| Runtime | Frameworks / projects |
+|---|---|
+| **PHP** | Laravel · Symfony · CodeIgniter 3 & 4 · CakePHP · Yii · WordPress · Drupal · Magento · Joomla · Core PHP |
+| **Go** | Gin · Echo · plain Go (`dbox create go <name>`) |
+| **Rust** | Actix-web · Axum · plain Rust (`dbox create rust <name>`) |
+
+Go/Rust projects get live-reload baked in (`air` and `cargo-watch`) and
+auto-wire to the DBox database via env vars. Detection, lifecycle commands,
+ports, services, and DB readiness work identically across runtimes. See
+[docs/runtimes.md](docs/runtimes.md) for the full picture.
 
 Details and detection rules: [docs/frameworks.md](docs/frameworks.md).
 
@@ -167,6 +177,7 @@ Details and detection rules: [docs/frameworks.md](docs/frameworks.md).
 | [docs/installation.md](docs/installation.md) | Requirements, install, building a standalone binary |
 | [docs/getting-started.md](docs/getting-started.md) | First project, both `create` and `init` flows |
 | [docs/architecture.md](docs/architecture.md) | Components, data flow, the generation pipeline |
+| [docs/runtimes.md](docs/runtimes.md) | PHP, Go, Rust — what's the same and what differs |
 | [docs/configuration.md](docs/configuration.md) | Complete `dbox.yml` reference |
 | [docs/commands.md](docs/commands.md) | Every CLI command and option |
 | [docs/frameworks.md](docs/frameworks.md) | Supported frameworks, detection, scaffolding |

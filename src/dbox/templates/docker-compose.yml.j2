@@ -3,6 +3,7 @@
 name: dbox-{{ name }}
 
 services:
+  {% if runtime == 'php' %}
   php:
     build:
       context: ./php
@@ -62,6 +63,41 @@ services:
       {% if ssl.enabled %}
       - ./certs:/etc/dbox/certs:ro
       {% endif %}
+    networks:
+      - dbox
+  {% endif %}
+  {% endif %}
+
+  {% if runtime in ('go', 'rust') %}
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: dbox-{{ name }}-app
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ../:/app
+      {% if runtime == 'go' %}
+      - dbox-go-modcache:/go/pkg/mod
+      - dbox-{{ name }}-gocache:/root/.cache/go-build
+      {% else %}
+      - dbox-cargo-cache:/usr/local/cargo/registry
+      - dbox-{{ name }}-target:/app/target
+      {% endif %}
+    ports:
+      - "{{ ports.app }}:{{ app_container_port }}"
+    {% if app_env %}
+    environment:
+      {% for key, value in app_env.items() %}
+      "{{ key }}": "{{ value }}"
+      {% endfor %}
+    {% endif %}
+    {% if needs_db %}
+    depends_on:
+      db:
+        condition: service_healthy
+    {% endif %}
     networks:
       - dbox
   {% endif %}
@@ -156,3 +192,13 @@ services:
 networks:
   dbox:
     driver: bridge
+
+{% if runtime == 'go' %}
+volumes:
+  dbox-go-modcache:
+  dbox-{{ name }}-gocache:
+{% elif runtime == 'rust' %}
+volumes:
+  dbox-cargo-cache:
+  dbox-{{ name }}-target:
+{% endif %}

@@ -15,6 +15,15 @@ from dbox.config import DBOX_DIR
 
 PHP_SERVICE = "php"
 
+# Service name the runtime's app code lives in. PHP keeps its legacy "php"
+# service so existing projects don't churn; Go/Rust use a generic "app".
+APP_SERVICE_BY_RUNTIME = {"php": "php", "go": "app", "rust": "app"}
+
+
+def app_service(cfg) -> str:
+    """Service name of the app container for this project's runtime."""
+    return APP_SERVICE_BY_RUNTIME.get(getattr(cfg, "runtime", "php"), "php")
+
 
 def compose_file(project_dir: Path) -> Path:
     return project_dir / DBOX_DIR / "docker-compose.yml"
@@ -49,7 +58,7 @@ def command(project_dir: Path, args: list[str]) -> list[str]:
 def run_once(
     project_dir: Path,
     shell_command: str,
-    service: str = "php",
+    service: str = PHP_SERVICE,
     env: dict[str, str] | None = None,
 ) -> int:
     """Run a throwaway shell command in a fresh service container (`run --rm`).
@@ -70,7 +79,10 @@ def run_once(
     ]
     for key, value in (env or {}).items():
         args += ["-e", f"{key}={value}"]
-    args += [service, "sh", "-lc", shell_command]
+    # Use `sh -c` (NOT `-lc`): dash's login shell sources /etc/profile and
+    # resets PATH to a basic set, which hides /usr/local/go/bin etc. in the
+    # golang/rust base images.
+    args += [service, "sh", "-c", shell_command]
     return run(project_dir, args).returncode
 
 
@@ -154,3 +166,15 @@ def exec_service(
 
 def exec_php(project_dir: Path, command: list[str], interactive: bool = False) -> int:
     return exec_service(project_dir, command, service=PHP_SERVICE, interactive=interactive)
+
+
+def exec_app(
+    project_dir: Path,
+    cfg,
+    command: list[str],
+    interactive: bool = False,
+) -> int:
+    """Run a command in the runtime's app container (php / go / rust)."""
+    return exec_service(
+        project_dir, command, service=app_service(cfg), interactive=interactive
+    )

@@ -1,10 +1,12 @@
 # Frameworks
 
-DBox supports 7 frameworks and 4 CMS platforms. Each is implemented as a
-plugin in `src/dbox/plugins/` describing how to detect it, what it needs, how
-to scaffold it, and which native CLI it exposes.
+DBox supports frameworks across **three runtimes**: PHP, Go, and Rust. Each
+framework is a plugin in `src/dbox/plugins/` describing how to detect it, what
+it needs, how to scaffold it, and which native CLI it exposes.
 
 ## Supported
+
+### PHP
 
 | Name (`dbox create <name>`) | Label | Document root | Native CLI |
 |---|---|---|---|
@@ -19,6 +21,28 @@ to scaffold it, and which native CLI it exposes.
 | `drupal` | Drupal | `/web` | `dbox drush` |
 | `magento` | Magento | `/pub` | `dbox magento` |
 | `joomla` | Joomla | `/` | `dbox joomla` |
+
+### Go
+
+| Name | Label | App port | Native CLI |
+|---|---|---|---|
+| `gin` | Gin | 8080 | `dbox go` |
+| `echo` | Echo | 8080 | `dbox go` |
+| `go` | Plain Go (net/http) | 8080 | `dbox go` |
+
+Detection scans `go.mod` for `github.com/gin-gonic/gin` / `github.com/labstack/echo/v4`.
+
+### Rust
+
+| Name | Label | App port | Native CLI |
+|---|---|---|---|
+| `actix` | Actix-web | 8080 | `dbox cargo` |
+| `axum` | Axum | 8080 | `dbox cargo` |
+| `rust` | Plain Rust | 8080 | `dbox cargo` |
+
+Detection scans `Cargo.toml`'s `[dependencies]` for `actix-web` / `axum`. See
+[runtimes.md](runtimes.md) for how Go/Rust projects differ from PHP at the
+container/networking level.
 
 ## Default services per framework
 

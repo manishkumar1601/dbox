@@ -37,6 +37,10 @@ class Detection:
     def document_root(self) -> str:
         return self.plugin.document_root if self.plugin else "/"
 
+    @property
+    def runtime(self) -> str:
+        return self.plugin.runtime if self.plugin else "php"
+
 
 def _read_composer(project_dir: Path) -> dict:
     path = project_dir / "composer.json"

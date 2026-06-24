@@ -24,9 +24,11 @@ from dbox.config import (
     SUPPORTED_SERVERS,
     ComposerConfig,
     DatabaseConfig,
+    GoConfig,
     PhpConfig,
     PortsConfig,
     ProjectConfig,
+    RustConfig,
     ServerConfig,
     ServicesConfig,
 )
@@ -64,6 +66,7 @@ PASSTHROUGH_CTX = {"allow_extra_args": True, "ignore_unknown_options": True}
 
 # Framework-native CLIs exposed through DBox (command -> in-container prefix).
 PASSTHROUGH = {
+    # PHP frameworks
     "artisan": ["php", "artisan"],
     "spark": ["php", "spark"],
     "wp": ["wp", "--allow-root"],
@@ -73,6 +76,9 @@ PASSTHROUGH = {
     "drush": ["vendor/bin/drush"],
     "magento": ["php", "bin/magento"],
     "joomla": ["php", "cli/joomla.php"],
+    # Go / Rust toolchains
+    "go": ["go"],
+    "cargo": ["cargo"],
 }
 
 
@@ -111,6 +117,7 @@ def _allocated_ports() -> PortsConfig:
             "phpmyadmin": defaults.phpmyadmin,
             "meilisearch": defaults.meilisearch,
             "elasticsearch": defaults.elasticsearch,
+            "app": defaults.app,
         }
     )
     return PortsConfig(**chosen)
@@ -141,8 +148,12 @@ def _kv(label: str, value: str) -> None:
 
 
 def _print_urls(cfg: ProjectConfig) -> None:
-    scheme = "https" if cfg.ssl.enabled else "http"
-    port = cfg.ports.https if cfg.ssl.enabled else cfg.ports.http
+    if cfg.runtime == "php":
+        scheme = "https" if cfg.ssl.enabled else "http"
+        port = cfg.ports.https if cfg.ssl.enabled else cfg.ports.http
+    else:
+        scheme = "http"
+        port = cfg.ports.app
     db = cfg.database
 
     console.print()
@@ -203,9 +214,13 @@ def _revalidate_ports(cfg: ProjectConfig) -> bool:
     taken = ports.docker_published_ports() - own
 
     # Only the ports that will actually be published matter.
-    fields = ["http"]
-    if cfg.ssl.enabled:
-        fields.append("https")
+    fields: list[str] = []
+    if cfg.runtime == "php":
+        fields.append("http")
+        if cfg.ssl.enabled:
+            fields.append("https")
+    else:  # go / rust expose their own app port directly
+        fields.append("app")
     if cfg.database.engine != "sqlite":
         fields.append("database")
         if cfg.services.phpmyadmin:
@@ -227,10 +242,19 @@ def _revalidate_ports(cfg: ProjectConfig) -> bool:
 
 
 def _run_framework(ctx: typer.Context, prefix: list[str]) -> None:
-    project_dir, _ = _resolve()
+    project_dir, cfg = _resolve()
     _ensure_docker()
-    code = engine.exec_php(project_dir, prefix + list(ctx.args), interactive=sys.stdin.isatty())
+    code = engine.exec_app(
+        project_dir, cfg, prefix + list(ctx.args), interactive=sys.stdin.isatty()
+    )
     raise typer.Exit(code)
+
+
+def _require_php(cfg: ProjectConfig, what: str) -> None:
+    """Abort with a clear message when a PHP-only command runs on a non-PHP project."""
+    if cfg.runtime != "php":
+        error(f"`dbox {what}` is only available for PHP projects (runtime: {cfg.runtime}).")
+        raise typer.Exit(1)
 
 
 # ---------------------------------------------------------------------------
@@ -369,34 +393,77 @@ def init(
     step(f"Inspecting {project_dir.name}/")
     det = detection.detect(project_dir)
     info(f"Framework:  {det.label}")
-    info(f"PHP:        {det.php_version}")
-    if det.extensions:
-        info(f"Extensions: {', '.join(det.extensions)}")
+    info(f"Runtime:    {det.runtime}")
+    if det.runtime == "php":
+        info(f"PHP:        {det.php_version}")
+        if det.extensions:
+            info(f"Extensions: {', '.join(det.extensions)}")
     if det.services:
         info(f"Services:   {', '.join(det.services)}")
 
-    cfg = ProjectConfig(
-        name=_slug(project_dir.name),
-        framework=det.framework,
+    name = _slug(project_dir.name)
+    cfg = _build_project_config(
+        det.plugin,
+        name=name,
+        runtime=det.runtime,
         document_root=det.document_root,
-        php=PhpConfig(
-            version=det.php_version,
-            extensions=_merge_extensions(PhpConfig().extensions, det.extensions),
-        ),
-        composer=ComposerConfig(),
-        server=ServerConfig(),
-        database=DatabaseConfig(
-            name=_slug(project_dir.name),
-            user=_slug(project_dir.name),
-            password=_slug(project_dir.name),
-        ),
-        services=_services_from(det.services),
-        ports=_allocated_ports(),
+        framework=det.framework,
+        php_version_override=det.php_version if det.runtime == "php" else None,
+        extra_extensions=det.extensions if det.runtime == "php" else [],
+        services_override=det.services,
     )
-    # Plain PHP / sqlite-less projects keep the DB; users can switch with `dbox db`.
     _save_and_regen(project_dir, cfg)
     success("Wrote dbox.yml and .dbox/ environment.")
     info("Next: `dbox start`")
+
+
+def _build_project_config(
+    plugin,
+    *,
+    name: str,
+    runtime: str,
+    document_root: str,
+    framework: str,
+    php_version_override: str | None = None,
+    extra_extensions: list[str] | None = None,
+    services_override: list[str] | None = None,
+) -> ProjectConfig:
+    """Build a ProjectConfig appropriate for the given runtime."""
+    services_list = services_override if services_override is not None else (
+        plugin.services() if plugin else []
+    )
+    db_name = name
+    common_kwargs = dict(
+        name=name,
+        framework=framework,
+        runtime=runtime,
+        document_root=document_root,
+        database=DatabaseConfig(name=db_name, user=db_name, password=db_name),
+        services=_services_from(services_list),
+        ports=_allocated_ports(),
+    )
+    if runtime == "php":
+        plugin_exts = plugin.extensions() if plugin else []
+        php_version = (
+            php_version_override
+            or (plugin.php_version if plugin else None)
+            or PhpConfig().version
+        )
+        return ProjectConfig(
+            **common_kwargs,
+            php=PhpConfig(
+                version=php_version,
+                extensions=_merge_extensions(
+                    PhpConfig().extensions, plugin_exts, extra_extensions or []
+                ),
+            ),
+            composer=ComposerConfig(),
+        )
+    if runtime == "go":
+        return ProjectConfig(**common_kwargs, go=GoConfig())
+    if runtime == "rust":
+        return ProjectConfig(**common_kwargs, rust=RustConfig())
+    raise ValueError(f"Unknown runtime: {runtime}")
 
 
 @app.command()
@@ -417,24 +484,19 @@ def create(
         raise typer.Exit(1)
     target.mkdir(parents=True, exist_ok=True)
 
-    db_name = _slug(name)
-    cfg = ProjectConfig(
+    cfg = _build_project_config(
+        plugin,
         name=_slug(name),
-        framework=plugin.name,
+        runtime=plugin.runtime,
         document_root=plugin.document_root,
-        php=PhpConfig(
-            version=plugin.php_version or PhpConfig().version,
-            extensions=_merge_extensions(PhpConfig().extensions, plugin.extensions()),
-        ),
-        database=DatabaseConfig(name=db_name, user=db_name, password=db_name),
-        services=_services_from(plugin.services()),
-        ports=_allocated_ports(),
+        framework=plugin.name,
     )
     _save_and_regen(target, cfg)
     success(f"Created {name}/dbox.yml ({plugin.label})")
 
-    step("Building PHP image (first run can take a few minutes)…")
-    if engine.build(target, "php") != 0:
+    build_service = engine.app_service(cfg)  # "php" for PHP, "app" for Go/Rust
+    step(f"Building {plugin.runtime.upper()} image (first run can take a few minutes)…")
+    if engine.build(target, build_service) != 0:
         error("Image build failed.")
         raise typer.Exit(1)
 
@@ -454,7 +516,10 @@ def create(
     create_env = plugin.create_env(creds) if creds else {}
 
     step(f"Scaffolding {plugin.label}…")
-    if engine.run_once(target, " && ".join(steps), env=create_env) != 0:
+    # Join with newlines (not &&) so steps can use multi-line constructs like
+    # heredocs (`cat <<'EOF' ... EOF`). `set -e` makes any step's failure abort.
+    script = "set -e\n" + "\n".join(steps)
+    if engine.run_once(target, script, service=build_service, env=create_env) != 0:
         error("Scaffolding failed. The image is built — add sources manually and run `dbox start`.")
         raise typer.Exit(1)
 
@@ -764,6 +829,7 @@ def joomla(ctx: typer.Context) -> None:
 def composer(ctx: typer.Context) -> None:
     """Run Composer in the container, or `composer use <version>` to switch it."""
     project_dir, cfg = _resolve()
+    _require_php(cfg, "composer")
     _ensure_docker()
     args = list(ctx.args)
     if len(args) >= 2 and args[0] == "use":
@@ -773,6 +839,18 @@ def composer(ctx: typer.Context) -> None:
         raise typer.Exit(engine.build(project_dir, "php"))
     code = engine.exec_php(project_dir, ["composer", *args], interactive=sys.stdin.isatty())
     raise typer.Exit(code)
+
+
+@app.command(context_settings=PASSTHROUGH_CTX)
+def go(ctx: typer.Context) -> None:
+    """Go: run `go` inside the app container (e.g. `dbox go mod tidy`)."""
+    _run_framework(ctx, PASSTHROUGH["go"])
+
+
+@app.command(context_settings=PASSTHROUGH_CTX)
+def cargo(ctx: typer.Context) -> None:
+    """Rust: run `cargo` inside the app container (e.g. `dbox cargo build`)."""
+    _run_framework(ctx, PASSTHROUGH["cargo"])
 
 
 # ---------------------------------------------------------------------------
@@ -790,6 +868,7 @@ def php_use(version: str = typer.Argument(..., help=f"One of: {', '.join(SUPPORT
         error(f"Unsupported PHP version. Choose from: {', '.join(SUPPORTED_PHP)}")
         raise typer.Exit(1)
     project_dir, cfg = _resolve()
+    _require_php(cfg, "php use")
     cfg.php.version = version
     _save_and_regen(project_dir, cfg)
     success(f"PHP set to {version}. Rebuilding image…")
@@ -849,7 +928,11 @@ app.add_typer(ext_app, name="ext")
 def ext_list() -> None:
     """List supported and currently enabled extensions."""
     root = config.find_root()
-    enabled = set(config.load(root).php.extensions) if root else set()
+    enabled: set[str] = set()
+    if root:
+        cfg = config.load(root)
+        if cfg.php:
+            enabled = set(cfg.php.extensions)
     console.print("[title]Extensions[/title] [muted](● enabled)[/muted]")
     for name in extensions.supported():
         mark = "[ok]●[/ok]" if name in enabled else "[muted]○[/muted]"
@@ -860,6 +943,7 @@ def ext_list() -> None:
 def ext_install(name: str = typer.Argument(..., help="Extension name, e.g. redis")) -> None:
     """Add an extension and rebuild the PHP image."""
     project_dir, cfg = _resolve()
+    _require_php(cfg, "ext install")
     if name not in cfg.php.extensions:
         cfg.php.extensions.append(name)
     _save_and_regen(project_dir, cfg)
@@ -872,6 +956,7 @@ def ext_install(name: str = typer.Argument(..., help="Extension name, e.g. redis
 def ext_remove(name: str = typer.Argument(..., help="Extension name to remove")) -> None:
     """Remove an extension and rebuild the PHP image."""
     project_dir, cfg = _resolve()
+    _require_php(cfg, "ext remove")
     if name in cfg.php.extensions:
         cfg.php.extensions.remove(name)
     _save_and_regen(project_dir, cfg)

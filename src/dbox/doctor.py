@@ -42,15 +42,19 @@ def run_checks(project_dir: Path, cfg: ProjectConfig | None) -> list[Check]:
         )
     )
 
-    # PHP version
-    php_ok = cfg.php.version in SUPPORTED_PHP
-    checks.append(
-        Check(
-            "PHP version supported",
-            php_ok,
-            cfg.php.version if php_ok else f"{cfg.php.version} not in {SUPPORTED_PHP}",
+    # Runtime
+    checks.append(Check("Runtime", True, cfg.runtime))
+
+    # PHP version (PHP runtime only)
+    if cfg.runtime == "php" and cfg.php is not None:
+        php_ok = cfg.php.version in SUPPORTED_PHP
+        checks.append(
+            Check(
+                "PHP version supported",
+                php_ok,
+                cfg.php.version if php_ok else f"{cfg.php.version} not in {SUPPORTED_PHP}",
+            )
         )
-    )
 
     # Containers (only meaningful if the daemon is up)
     if daemon_ok and engine.compose_file(project_dir).exists():
@@ -67,8 +71,8 @@ def run_checks(project_dir: Path, cfg: ProjectConfig | None) -> list[Check]:
         if cfg.services.redis:
             checks.append(Check("Redis service", "redis" in running))
 
-    # Extensions vs. what the framework wants
-    if plugin:
+    # Extensions vs. what the framework wants (PHP runtime only)
+    if plugin and cfg.runtime == "php" and cfg.php is not None:
         recommended = set(plugin.extensions())
         missing = recommended - set(cfg.php.extensions)
         checks.append(

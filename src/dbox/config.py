@@ -7,7 +7,7 @@ change an environment.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -15,7 +15,10 @@ import yaml
 CONFIG_FILENAME = "dbox.yml"
 DBOX_DIR = ".dbox"
 
+SUPPORTED_RUNTIMES = ["php", "go", "rust"]
 SUPPORTED_PHP = ["7.4", "8.0", "8.1", "8.2", "8.3", "8.4"]
+SUPPORTED_GO = ["1.23", "1.24", "1.25"]
+SUPPORTED_RUST = ["1.75", "1.80", "stable"]
 SUPPORTED_SERVERS = ["nginx", "apache", "litespeed", "caddy"]
 SUPPORTED_DB = ["mariadb", "mysql", "postgres", "sqlite"]
 
@@ -39,6 +42,16 @@ class PhpConfig:
 @dataclass
 class ComposerConfig:
     version: str = "latest"
+
+
+@dataclass
+class GoConfig:
+    version: str = "1.25"
+
+
+@dataclass
+class RustConfig:
+    version: str = "stable"
 
 
 @dataclass
@@ -81,41 +94,110 @@ class PortsConfig:
     phpmyadmin: int = 7060
     meilisearch: int = 7070
     elasticsearch: int = 7080
+    # Go / Rust app container host port (unused for PHP runtime).
+    app: int = 7090
 
 
 @dataclass
 class ProjectConfig:
     name: str = "app"
     framework: str = "corephp"
+    runtime: str = "php"  # "php" | "go" | "rust"
     document_root: str = "/public"
-    php: PhpConfig = field(default_factory=PhpConfig)
-    composer: ComposerConfig = field(default_factory=ComposerConfig)
+    php: PhpConfig | None = None
+    composer: ComposerConfig | None = None
+    go: GoConfig | None = None
+    rust: RustConfig | None = None
     server: ServerConfig = field(default_factory=ServerConfig)
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     services: ServicesConfig = field(default_factory=ServicesConfig)
     ssl: SslConfig = field(default_factory=SslConfig)
     ports: PortsConfig = field(default_factory=PortsConfig)
 
+    def __post_init__(self) -> None:
+        """Auto-populate the runtime-specific config block when missing.
+
+        Keeps callers that do ``ProjectConfig(framework="laravel")`` working
+        — they get a PhpConfig/ComposerConfig for free. Same for Go/Rust.
+        """
+        if self.runtime == "php":
+            if self.php is None:
+                self.php = PhpConfig()
+            if self.composer is None:
+                self.composer = ComposerConfig()
+        elif self.runtime == "go" and self.go is None:
+            self.go = GoConfig()
+        elif self.runtime == "rust" and self.rust is None:
+            self.rust = RustConfig()
+
     # ---- serialization -------------------------------------------------
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        """Serialize to a dict suitable for round-tripping through YAML.
+
+        Runtime-specific blocks that are unused are stripped so a PHP yml
+        doesn't carry empty ``go:``/``rust:`` keys (and vice versa). The
+        ``runtime`` key is also omitted when it equals ``php`` so existing
+        PHP project files stay byte-identical to pre-multi-runtime DBox.
+        """
+        result: dict = {
+            "name": self.name,
+            "framework": self.framework,
+        }
+        if self.runtime != "php":
+            result["runtime"] = self.runtime
+        result["document_root"] = self.document_root
+        if self.php is not None:
+            result["php"] = _to_plain(self.php)
+        if self.composer is not None:
+            result["composer"] = _to_plain(self.composer)
+        if self.go is not None:
+            result["go"] = _to_plain(self.go)
+        if self.rust is not None:
+            result["rust"] = _to_plain(self.rust)
+        result["server"] = _to_plain(self.server)
+        result["database"] = _to_plain(self.database)
+        result["services"] = _to_plain(self.services)
+        result["ssl"] = _to_plain(self.ssl)
+        result["ports"] = _to_plain(self.ports)
+        return result
 
     @classmethod
     def from_dict(cls, data: dict) -> "ProjectConfig":
+        """Load from a dict, defaulting unknown runtimes to ``php`` so legacy
+        ``dbox.yml`` files (with no ``runtime`` key) keep working unchanged."""
         data = dict(data or {})
+        runtime = data.get("runtime", "php")
+        php = _merge(PhpConfig, data.get("php")) if runtime == "php" else None
+        composer = _merge(ComposerConfig, data.get("composer")) if runtime == "php" else None
+        go = _merge(GoConfig, data.get("go")) if runtime == "go" else None
+        rust = _merge(RustConfig, data.get("rust")) if runtime == "rust" else None
+        # When loading a PHP project, populate php/composer even if absent
+        # from the file (legacy yml may have just framework/server/db sections).
+        if runtime == "php" and php is None:
+            php = PhpConfig()
+        if runtime == "php" and composer is None:
+            composer = ComposerConfig()
         return cls(
             name=data.get("name", "app"),
             framework=data.get("framework", "corephp"),
+            runtime=runtime,
             document_root=data.get("document_root", "/public"),
-            php=_merge(PhpConfig, data.get("php")),
-            composer=_merge(ComposerConfig, data.get("composer")),
+            php=php,
+            composer=composer,
+            go=go,
+            rust=rust,
             server=_merge(ServerConfig, data.get("server")),
             database=_merge(DatabaseConfig, data.get("database")),
             services=_merge(ServicesConfig, data.get("services")),
             ssl=_merge(SslConfig, data.get("ssl")),
             ports=_merge(PortsConfig, data.get("ports")),
         )
+
+
+def _to_plain(obj) -> dict:
+    """Serialize a dataclass to a plain dict (no asdict so we keep ordering)."""
+    return {k: getattr(obj, k) for k in obj.__dataclass_fields__}
 
 
 def _merge(cls, data):

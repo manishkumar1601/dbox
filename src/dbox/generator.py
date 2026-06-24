@@ -73,33 +73,21 @@ def _database_spec(cfg: ProjectConfig) -> dict | None:
 
 
 def _context(cfg: ProjectConfig) -> dict:
-    server = cfg.server.type
-    separate_web = server in ("nginx", "caddy", "litespeed")
-    web_image = {
-        "nginx": "nginx:alpine",
-        "caddy": "caddy:alpine",
-        "litespeed": "litespeedtech/openlitespeed:latest",
-    }.get(server, "nginx:alpine")
     db = _database_spec(cfg)
     plugin = plugins.get(cfg.framework)
     app_env = plugin.app_env(cfg.database) if plugin else {}
-    return {
+    app_container_port = plugin.default_app_port if plugin else 8080
+
+    ctx: dict = {
         "cfg": cfg,
         "name": cfg.name,
+        "runtime": cfg.runtime,
         "app_env": app_env,
+        "app_service": "php" if cfg.runtime == "php" else "app",
+        "app_container_port": app_container_port,
         "framework": cfg.framework,
-        "php_version": cfg.php.version,
-        "composer_version": cfg.composer.version,
         "document_root": cfg.document_root,
         "container_docroot": _normalize_docroot(cfg.document_root),
-        "apache_docroot": _normalize_docroot(cfg.document_root),
-        "server": server,
-        "separate_web": separate_web,
-        "web_image": web_image,
-        "ext": extensions.resolve(cfg.php.extensions),
-        # de-duped extension list for install-php-extensions
-        "php_extensions": list(dict.fromkeys(cfg.php.extensions)),
-        "install_wp_cli": cfg.framework == "wordpress",
         "ports": cfg.ports,
         "ssl": cfg.ssl,
         "services": cfg.services,
@@ -107,6 +95,34 @@ def _context(cfg: ProjectConfig) -> dict:
         "needs_db": db is not None,
         "db": db,
     }
+
+    if cfg.runtime == "php":
+        server = cfg.server.type
+        ctx["server"] = server
+        ctx["separate_web"] = server in ("nginx", "caddy", "litespeed")
+        ctx["web_image"] = {
+            "nginx": "nginx:alpine",
+            "caddy": "caddy:alpine",
+            "litespeed": "litespeedtech/openlitespeed:latest",
+        }.get(server, "nginx:alpine")
+        ctx["apache_docroot"] = _normalize_docroot(cfg.document_root)
+        ctx["php_version"] = cfg.php.version if cfg.php else "8.3"
+        ctx["composer_version"] = cfg.composer.version if cfg.composer else "latest"
+        ctx["ext"] = extensions.resolve(cfg.php.extensions if cfg.php else [])
+        ctx["php_extensions"] = list(
+            dict.fromkeys(cfg.php.extensions if cfg.php else [])
+        )
+        ctx["install_wp_cli"] = cfg.framework == "wordpress"
+    elif cfg.runtime == "go":
+        ctx["go_version"] = (cfg.go.version if cfg.go else "1.23")
+        ctx["server"] = None
+        ctx["separate_web"] = False
+    elif cfg.runtime == "rust":
+        ctx["rust_version"] = (cfg.rust.version if cfg.rust else "stable")
+        ctx["server"] = None
+        ctx["separate_web"] = False
+
+    return ctx
 
 
 def _render(template: str, ctx: dict, dest: Path) -> None:
@@ -124,24 +140,33 @@ def generate(project_dir: Path, cfg: ProjectConfig) -> Path:
         (base / sub).mkdir(parents=True, exist_ok=True)
 
     _render("docker-compose.yml.j2", ctx, base / "docker-compose.yml")
-    _render("php/Dockerfile.j2", ctx, base / "php" / "Dockerfile")
-    _render("php/php.ini.j2", ctx, base / "php" / "php.ini")
     # Source template is named env.j2 (not .env.j2) so it survives the wheel
     # build — setuptools' package-data globs skip dotfiles.
     _render("env/env.j2", ctx, base / "env" / ".env")
 
-    if cfg.server.type == "nginx":
-        _render("nginx/default.conf.j2", ctx, base / "nginx" / "default.conf")
-    elif cfg.server.type == "caddy":
-        _render("caddy/Caddyfile.j2", ctx, base / "caddy" / "Caddyfile")
-    elif cfg.server.type == "litespeed":
-        _render("litespeed/httpd_config.conf.j2", ctx, base / "litespeed" / "httpd_config.conf")
-        _render("litespeed/vhconf.conf.j2", ctx, base / "litespeed" / "vhconf.conf")
-    # apache: served by the PHP image (mod_php), no separate web container.
-    if cfg.server.type == "apache" and cfg.ssl.enabled:
-        _render("apache/ssl.conf.j2", ctx, base / "apache" / "ssl.conf")
+    if cfg.runtime == "php":
+        _render("php/Dockerfile.j2", ctx, base / "php" / "Dockerfile")
+        _render("php/php.ini.j2", ctx, base / "php" / "php.ini")
 
-    if cfg.ssl.enabled:
-        (base / "certs").mkdir(parents=True, exist_ok=True)
+        if cfg.server.type == "nginx":
+            _render("nginx/default.conf.j2", ctx, base / "nginx" / "default.conf")
+        elif cfg.server.type == "caddy":
+            _render("caddy/Caddyfile.j2", ctx, base / "caddy" / "Caddyfile")
+        elif cfg.server.type == "litespeed":
+            _render("litespeed/httpd_config.conf.j2", ctx, base / "litespeed" / "httpd_config.conf")
+            _render("litespeed/vhconf.conf.j2", ctx, base / "litespeed" / "vhconf.conf")
+        # apache: served by the PHP image (mod_php), no separate web container.
+        if cfg.server.type == "apache" and cfg.ssl.enabled:
+            _render("apache/ssl.conf.j2", ctx, base / "apache" / "ssl.conf")
+
+        if cfg.ssl.enabled:
+            (base / "certs").mkdir(parents=True, exist_ok=True)
+
+    elif cfg.runtime == "go":
+        _render("go/Dockerfile.j2", ctx, base / "app" / "Dockerfile")
+        _render("go/air.toml.j2", ctx, base / "app" / ".air.toml")
+
+    elif cfg.runtime == "rust":
+        _render("rust/Dockerfile.j2", ctx, base / "app" / "Dockerfile")
 
     return base

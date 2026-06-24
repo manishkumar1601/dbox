@@ -62,6 +62,27 @@ See [frameworks.md](frameworks.md) for every supported `<framework>` value.
 > `MAGENTO_PUBLIC_KEY` / `MAGENTO_PRIVATE_KEY` from the environment). See
 > [frameworks.md](frameworks.md#magento).
 
+### Create a Go or Rust project
+
+DBox isn't PHP-only. The same `create` command works across runtimes:
+
+```bash
+dbox create gin myapi          # Go + Gin   (auto-installs gin into go.mod)
+dbox create echo myapi         # Go + Echo
+dbox create go myapi           # plain Go (net/http)
+
+dbox create actix myapi        # Rust + Actix-web
+dbox create axum myapi         # Rust + Axum
+dbox create rust myapi         # plain Rust
+```
+
+Go and Rust projects come with **live reload** baked in (`air` and
+`cargo-watch`) and auto-wire to the DBox database — Gin/Echo via `DB_*` env
+vars, Actix/Axum via `DATABASE_URL`. The app container exposes its port
+directly (default `7090`). See [runtimes.md](runtimes.md) for the full
+picture. Use `dbox go …` / `dbox cargo …` to run the toolchain inside the
+container.
+
 ## Adopt an existing project
 
 ```bash

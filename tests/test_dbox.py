@@ -278,6 +278,164 @@ def test_allocate_no_collisions():
     assert len(set(chosen.values())) == 3
 
 
+# ---- multi-runtime: Go & Rust ------------------------------------------
+
+
+def test_detect_plain_go_falls_back(tmp_path):
+    _mk(tmp_path, {"go.mod": "module example.com/app\n\ngo 1.23\n"})
+    det = detection.detect(tmp_path)
+    assert det.framework == "go"
+    assert det.runtime == "go"
+
+
+def test_detect_gin_from_go_mod(tmp_path):
+    _mk(
+        tmp_path,
+        {
+            "go.mod": (
+                "module example.com/app\n\ngo 1.23\n\n"
+                "require (\n"
+                "    github.com/gin-gonic/gin v1.10.0\n"
+                ")\n"
+            )
+        },
+    )
+    det = detection.detect(tmp_path)
+    assert det.framework == "gin"
+    assert det.runtime == "go"
+
+
+def test_detect_echo_from_go_mod(tmp_path):
+    _mk(
+        tmp_path,
+        {
+            "go.mod": (
+                "module example.com/app\n\ngo 1.23\n\n"
+                "require github.com/labstack/echo/v4 v4.12.0\n"
+            )
+        },
+    )
+    assert detection.detect(tmp_path).framework == "echo"
+
+
+def test_detect_plain_rust_falls_back(tmp_path):
+    _mk(tmp_path, {"Cargo.toml": '[package]\nname = "a"\nversion = "0.1.0"\nedition = "2021"\n'})
+    det = detection.detect(tmp_path)
+    assert det.framework == "rust"
+    assert det.runtime == "rust"
+
+
+def test_detect_actix_from_cargo_toml(tmp_path):
+    _mk(
+        tmp_path,
+        {
+            "Cargo.toml": (
+                '[package]\nname = "x"\nversion = "0.1.0"\nedition = "2021"\n\n'
+                "[dependencies]\n"
+                'actix-web = "4"\n'
+            )
+        },
+    )
+    det = detection.detect(tmp_path)
+    assert det.framework == "actix"
+    assert det.runtime == "rust"
+
+
+def test_detect_axum_from_cargo_toml(tmp_path):
+    _mk(
+        tmp_path,
+        {"Cargo.toml": '[dependencies]\naxum = "0.7"\ntokio = { version = "1", features = ["full"] }\n'},
+    )
+    assert detection.detect(tmp_path).framework == "axum"
+
+
+def test_generator_go_compose_has_app_service(tmp_path):
+    cfg = ProjectConfig(name="g", framework="gin", runtime="go")
+    generator.generate(tmp_path, cfg)
+    data = yaml.safe_load((tmp_path / ".dbox" / "docker-compose.yml").read_text())
+    assert "app" in data["services"]
+    assert "php" not in data["services"]
+    assert "web" not in data["services"]
+    # App must expose its container port.
+    assert any(":8080" in p for p in data["services"]["app"]["ports"])
+
+
+def test_generator_rust_compose_has_cargo_volumes(tmp_path):
+    cfg = ProjectConfig(name="r", framework="actix", runtime="rust")
+    generator.generate(tmp_path, cfg)
+    data = yaml.safe_load((tmp_path / ".dbox" / "docker-compose.yml").read_text())
+    vols = data["services"]["app"]["volumes"]
+    assert any("dbox-cargo-cache" in v for v in vols)
+    assert any("dbox-r-target" in v for v in vols)
+    assert "dbox-cargo-cache" in (data.get("volumes") or {})
+
+
+def test_generator_go_dockerfile_installs_air(tmp_path):
+    cfg = ProjectConfig(name="g", framework="gin", runtime="go")
+    generator.generate(tmp_path, cfg)
+    df = (tmp_path / ".dbox" / "app" / "Dockerfile").read_text()
+    assert "air-verse/air" in df
+    air_cfg = (tmp_path / ".dbox" / "app" / ".air.toml").read_text()
+    assert "go build" in air_cfg
+
+
+def test_generator_rust_dockerfile_installs_cargo_watch(tmp_path):
+    cfg = ProjectConfig(name="r", framework="actix", runtime="rust")
+    generator.generate(tmp_path, cfg)
+    df = (tmp_path / ".dbox" / "app" / "Dockerfile").read_text()
+    assert "cargo install cargo-watch" in df
+
+
+def test_gin_app_env_mysql():
+    plugin = plugins.get("gin")
+    env = plugin.app_env(DatabaseConfig(engine="mariadb", name="blog", user="u", password="p"))
+    assert env["DB_DRIVER"] == "mysql"
+    assert env["DB_HOST"] == "db"
+    assert env["DB_NAME"] == "blog"
+
+
+def test_actix_app_env_database_url():
+    plugin = plugins.get("actix")
+    env = plugin.app_env(DatabaseConfig(engine="postgres", name="api", user="u", password="p"))
+    assert env["DATABASE_URL"].startswith("postgres://u:p@db:5432/api")
+
+
+def test_all_runtimes_registered():
+    names = set(plugins.names())
+    assert {"go", "gin", "echo", "rust", "actix", "axum"}.issubset(names)
+
+
+def test_legacy_php_yml_loads_without_runtime(tmp_path):
+    """A dbox.yml from before multi-runtime (no `runtime` key) must default to
+    PHP and populate php/composer automatically."""
+    (tmp_path / "dbox.yml").write_text(
+        "name: blog\nframework: laravel\ndocument_root: /public\n", encoding="utf-8"
+    )
+    cfg = load(tmp_path)
+    assert cfg.runtime == "php"
+    assert cfg.php is not None
+    assert cfg.composer is not None
+
+
+def test_php_compose_has_no_app_service(tmp_path):
+    """PHP runtime must not produce an `app` service — that's reserved for Go/Rust."""
+    cfg = ProjectConfig(name="x", framework="laravel")
+    generator.generate(tmp_path, cfg)
+    data = yaml.safe_load((tmp_path / ".dbox" / "docker-compose.yml").read_text())
+    assert "php" in data["services"]
+    assert "app" not in data["services"]
+
+
+def test_go_app_env_db_via_engine_alias():
+    """exec_app picks the right service for each runtime."""
+    from dbox import engine
+    from dbox.config import ProjectConfig
+
+    assert engine.app_service(ProjectConfig(runtime="php")) == "php"
+    assert engine.app_service(ProjectConfig(runtime="go")) == "app"
+    assert engine.app_service(ProjectConfig(runtime="rust")) == "app"
+
+
 def test_updater_version_compare():
     from dbox import updater
 
