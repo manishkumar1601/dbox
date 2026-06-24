@@ -1,12 +1,12 @@
 # Installation
 
-> **New to PHPBox on a brand-new machine?** Jump to
+> **New to DBox on a brand-new machine?** Jump to
 > [First-time setup on a fresh PC](#first-time-setup-on-a-fresh-pc) for a
 > complete, copy-paste walkthrough. The sections below are the reference detail.
 
 ## First-time setup on a fresh PC
 
-One command installs the **latest PHPBox from GitHub** — no clone needed — and
+One command installs the **latest DBox from GitHub** — no clone needed — and
 **bootstraps its own prerequisites**: if Python or Docker are missing it
 installs them for you (via `winget` on Windows, Homebrew/apt on macOS/Linux).
 
@@ -14,22 +14,22 @@ installs them for you (via `winget` on Windows, Homebrew/apt on macOS/Linux).
 
 ```powershell
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/manishkumar1601/dbox/master/scripts/install.ps1 | iex
 ```
 
 ```bash
 # macOS / Linux
-curl -fsSL https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/manishkumar1601/dbox/master/scripts/install.sh | bash
 ```
 
 The installer will, in order:
 
-1. **Ensure Python 3.12+** — required to run the PHPBox CLI. Installed
+1. **Ensure Python 3.12+** — required to run the DBox CLI. Installed
    automatically if missing (`winget install Python.Python.3.12` / `brew` /
    apt-dnf-pacman), then refreshes PATH and continues.
-2. **Install PHPBox** — a global, isolated install via
+2. **Install DBox** — a global, isolated install via
    [pipx](https://pipx.pypa.io/) (set up for you if needed), pulled from the
-   GitHub source tarball, so `phpbox` works in **any folder**.
+   GitHub source tarball, so `dbox` works in **any folder**.
 3. **Ensure Docker** — required only when you *run* a project. Installed
    automatically if missing (`winget install Docker.DockerDesktop` /
    `brew install --cask docker` / Docker's official Linux script).
@@ -38,7 +38,7 @@ The installer will, in order:
 > the Docker engine for you: after Docker Desktop is installed you must
 > **reboot, then open Docker Desktop once** (accept the license) and wait until
 > it says *running*. The installer will remind you. This is only needed before
-> your first `phpbox start` — installing PHPBox itself doesn't require Docker.
+> your first `dbox start` — installing DBox itself doesn't require Docker.
 
 > **Running the script as a file** (e.g. from a clone) instead of piping it? You
 > can pass flags: `--skip-deps` (`-SkipDeps`) to skip installing Python/Docker,
@@ -47,8 +47,8 @@ The installer will, in order:
 ### Step 2 — Open a new terminal and verify
 
 ```powershell
-phpbox --help
-phpbox doctor      # confirms Docker is installed and running
+dbox --help
+dbox doctor      # confirms Docker is installed and running
 ```
 
 > A **new** terminal is required so the updated PATH (from pipx / a fresh Python
@@ -60,9 +60,9 @@ phpbox doctor      # confirms Docker is installed and running
 
 ```powershell
 cd C:\Users\<you>\projects
-phpbox create laravel blog       # also: corephp, wordpress, symfony, codeigniter, …
+dbox create laravel blog       # also: corephp, wordpress, symfony, codeigniter, …
 cd blog
-phpbox start
+dbox start
 # → http://localhost:8080
 ```
 
@@ -71,21 +71,21 @@ phpbox start
 ```powershell
 git clone https://github.com/acme/shop
 cd shop
-phpbox init        # auto-detects framework, PHP version, extensions, database
-phpbox start
+dbox init        # auto-detects framework, PHP version, extensions, database
+dbox start
 ```
 
 ### Everyday commands
 
 ```powershell
-phpbox stop          # stop containers (data is kept)
-phpbox logs -f       # tail logs
-phpbox shell         # open a shell inside the PHP container
-phpbox down          # remove containers + network
-phpbox down -v       # …and delete the database volume
+dbox stop          # stop containers (data is kept)
+dbox logs -f       # tail logs
+dbox shell         # open a shell inside the PHP container
+dbox down          # remove containers + network
+dbox down -v       # …and delete the database volume
 ```
 
-> The **first** `phpbox start` for a project downloads images and builds the PHP
+> The **first** `dbox start` for a project downloads images and builds the PHP
 > image — this takes a few minutes. Every start after that is fast.
 
 See [getting-started.md](getting-started.md) for the full workflow and
@@ -98,7 +98,7 @@ See [getting-started.md](getting-started.md) for the full workflow and
 | Dependency | Notes |
 |---|---|
 | **Docker** | Docker Desktop (Windows / macOS) or Docker Engine + the Compose v2 plugin (Linux). This is the only runtime requirement for the containers themselves. |
-| **Python 3.12+** | Needed only to run the PHPBox CLI. End users who get the standalone binary don't need Python at all. |
+| **Python 3.12+** | Needed only to run the DBox CLI. End users who get the standalone binary don't need Python at all. |
 
 Verify Docker is working before you start:
 
@@ -108,18 +108,18 @@ docker compose version
 docker info          # must succeed — the daemon has to be running
 ```
 
-PHPBox's `phpbox doctor` will also check all of this for you.
+DBox's `dbox doctor` will also check all of this for you.
 
 ## Install from source (editable)
 
 ```bash
-git clone https://github.com/manishkumar1601/phpbox
-cd phpbox
+git clone https://github.com/manishkumar1601/dbox
+cd dbox
 python -m venv .venv
 # Windows:  .venv\Scripts\activate
 # Unix:     source .venv/bin/activate
 pip install -e .
-phpbox --help
+dbox --help
 ```
 
 The `-e` (editable) install means changes to the source are picked up
@@ -137,53 +137,53 @@ pytest                      # run the test suite
 From the repository root you can always run the module directly:
 
 ```bash
-python -m phpbox --help
+python -m dbox --help
 ```
 
 > On Windows terminals using a legacy code page, set `PYTHONUTF8=1` (or run in
-> Windows Terminal) so the status glyphs render. PHPBox forces UTF-8 on its
+> Windows Terminal) so the status glyphs render. DBox forces UTF-8 on its
 > output streams, but the environment variable removes any ambiguity.
 
 ## Building a standalone binary
 
-PHPBox ships as a single executable via [PyInstaller](https://pyinstaller.org/):
+DBox ships as a single executable via [PyInstaller](https://pyinstaller.org/):
 
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --name phpbox \
-    --add-data "src/phpbox/templates:phpbox/templates" \
-    src/phpbox/__main__.py
+pyinstaller --onefile --name dbox \
+    --add-data "src/dbox/templates:dbox/templates" \
+    src/dbox/__main__.py
 ```
 
 Output:
 
 | Platform | Artifact |
 |---|---|
-| Windows | `dist/phpbox.exe` |
-| Linux | `dist/phpbox` |
-| macOS | `dist/phpbox` |
+| Windows | `dist/dbox.exe` |
+| Linux | `dist/dbox` |
+| macOS | `dist/dbox` |
 
 > The `--add-data` flag bundles the Jinja2 templates into the binary. The path
 > separator is `:` on Linux/macOS and `;` on Windows
-> (`--add-data "src/phpbox/templates;phpbox/templates"`).
+> (`--add-data "src/dbox/templates;dbox/templates"`).
 
 ## Updating
 
-PHPBox checks GitHub for new versions in the background (at most once a day) and
+DBox checks GitHub for new versions in the background (at most once a day) and
 shows a one-line notice on commands when an update is available. Apply it with:
 
 ```bash
-phpbox update
+dbox update
 ```
 
 This reinstalls the latest from GitHub using the same method you installed with
 (pipx or pip). On Windows the update completes a moment after the command exits
 (a running program can't replace its own files) — open a new terminal to use the
-new version. Check what you're on with `phpbox version`.
+new version. Check what you're on with `dbox version`.
 
-> **Versioning:** the installed version is `phpbox.__version__`; the update
+> **Versioning:** the installed version is `dbox.__version__`; the update
 > check compares it against the version on the `master` branch. Bump
-> `__version__` (in `src/phpbox/__init__.py` and `pyproject.toml`) when you cut a
+> `__version__` (in `src/dbox/__init__.py` and `pyproject.toml`) when you cut a
 > release so users are notified.
 
 ## Uninstall
@@ -191,13 +191,13 @@ new version. Check what you're on with `phpbox version`.
 The easiest way — works from anywhere, figures out pipx vs pip for you:
 
 ```bash
-phpbox uninstall          # add -y to skip the confirmation
+dbox uninstall          # add -y to skip the confirmation
 ```
 
 > On Windows the removal finishes a moment after the command exits (a running
 > program can't delete its own files), so open a new terminal to confirm.
 
-Alternatively, run the uninstall script (handy if the `phpbox` command itself is
+Alternatively, run the uninstall script (handy if the `dbox` command itself is
 broken — but you need the clone for this):
 
 ```bash
@@ -211,13 +211,13 @@ powershell -ExecutionPolicy Bypass -File scripts\uninstall.ps1
 Or remove it directly:
 
 ```bash
-pipx uninstall phpbox     # if installed with pipx
-pip uninstall phpbox      # if installed with pip
+pipx uninstall dbox     # if installed with pipx
+pip uninstall dbox      # if installed with pip
 ```
 
 Uninstalling does **not** touch your projects. Per-project containers and data
 are removed separately, from inside each project:
 
 ```bash
-phpbox down -v            # removes containers + the database volume
+dbox down -v            # removes containers + the database volume
 ```

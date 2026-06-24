@@ -1,30 +1,30 @@
 # Databases
 
-Switch with `phpbox db <engine>` (then `phpbox start`), or set `database.engine`
-in `phpbox.yml`.
+Switch with `dbox db <engine>` (then `dbox start`), or set `database.engine`
+in `dbox.yml`.
 
 | Engine | Image | Default version | Container port | Data dir |
 |---|---|---|---|---|
-| `mariadb` (default) | `mariadb:<ver>` | `11` | 3306 | `.phpbox/data/mariadb` |
-| `mysql` | `mysql:<ver>` | `8.4` | 3306 | `.phpbox/data/mysql` |
-| `postgres` | `postgres:<ver>` | `16` | 5432 | `.phpbox/data/postgres` |
+| `mariadb` (default) | `mariadb:<ver>` | `11` | 3306 | `.dbox/data/mariadb` |
+| `mysql` | `mysql:<ver>` | `8.4` | 3306 | `.dbox/data/mysql` |
+| `postgres` | `postgres:<ver>` | `16` | 5432 | `.dbox/data/postgres` |
 | `sqlite` | — (no container) | — | — | your project files |
 
-`phpbox db postgres` also sets a sensible default `version`; you can override it
-in `phpbox.yml`.
+`dbox db postgres` also sets a sensible default `version`; you can override it
+in `dbox.yml`.
 
 ## Connecting from your app
 
 Inside the containers the database is reachable at host **`db`**.
 
-For **Laravel, Symfony, CakePHP, and CodeIgniter 4**, PHPBox **auto-configures
+For **Laravel, Symfony, CakePHP, and CodeIgniter 4**, DBox **auto-configures
 the connection** — it injects the right environment variables into the app
 container (`DB_*` for Laravel, `DATABASE_URL` for Symfony/CakePHP,
 `database.default.*` for CodeIgniter 4), so a freshly created project connects
-with **no manual config**. PHPBox also waits for the database to be *healthy*
+with **no manual config**. DBox also waits for the database to be *healthy*
 before the app starts, so you won't hit "connection refused" on first boot.
 
-The same values are written to `.phpbox/env/.env` for reference (and for
+The same values are written to `.dbox/env/.env` for reference (and for
 frameworks that aren't auto-wired, like WordPress, which uses its install
 wizard — enter host `db`):
 
@@ -42,7 +42,7 @@ From the **host** (e.g. a GUI client), connect to `localhost` on the mapped
 
 ## Credentials
 
-`phpbox create`/`init` set the database name, user, and password all to the
+`dbox create`/`init` set the database name, user, and password all to the
 **project name**, plus a `root` / `root` admin login:
 
 ```yaml
@@ -60,7 +60,7 @@ So for a project `blog` you can connect as **`blog` / `blog`** (normal use) or
 by `db:backup` to run `mysqldump` as root.
 
 > **MySQL/MariaDB note:** those engines auto-create `root`, so if you set the
-> `user` to `root` PHPBox won't try to re-create it — it just applies the root
+> `user` to `root` DBox won't try to re-create it — it just applies the root
 > password. Postgres creates whatever `user` you specify (including `root`).
 
 ## phpMyAdmin
@@ -69,8 +69,8 @@ phpMyAdmin is **enabled by default** for Laravel, CodeIgniter, WordPress, and
 Core PHP (and you can enable it anywhere):
 
 ```bash
-phpbox phpmyadmin enable
-phpbox start
+dbox phpmyadmin enable
+dbox start
 # → http://localhost:8081  (PMA_HOST=db is configured automatically)
 ```
 
@@ -80,17 +80,17 @@ phpMyAdmin is ignored when the engine is SQLite.
 ## Backup & restore
 
 ```bash
-phpbox db:backup
-# ✓ Saved .phpbox/backups/blog-20260610-143000.sql
+dbox db:backup
+# ✓ Saved .dbox/backups/blog-20260610-143000.sql
 ```
 
 * MySQL/MariaDB → `mysqldump -u root -p<root_password> <name>`
 * PostgreSQL → `pg_dump -U <user> <name>`
 
-Restore from a dump (a bare filename resolves against `.phpbox/backups/`):
+Restore from a dump (a bare filename resolves against `.dbox/backups/`):
 
 ```bash
-phpbox db:restore blog-20260610-143000.sql
+dbox db:restore blog-20260610-143000.sql
 ```
 
 Backups require the `db` container to be running.
@@ -98,15 +98,15 @@ Backups require the `db` container to be running.
 ## SQLite
 
 SQLite needs no container — point your app at a file inside the project (e.g.
-`database/database.sqlite`). PHPBox omits the `db` service and disables
+`database/database.sqlite`). DBox omits the `db` service and disables
 phpMyAdmin automatically.
 
 ## Persistence & resetting
 
-Database files live in `.phpbox/data/<engine>/` (git-ignored). To wipe a
+Database files live in `.dbox/data/<engine>/` (git-ignored). To wipe a
 database completely:
 
 ```bash
-phpbox down -v        # removes containers + volumes
-# or delete .phpbox/data/<engine>/
+dbox down -v        # removes containers + volumes
+# or delete .dbox/data/<engine>/
 ```

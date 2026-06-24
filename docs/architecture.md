@@ -1,14 +1,14 @@
 # Architecture
 
-PHPBox is a thin, deterministic layer on top of `docker compose`. It never asks
+DBox is a thin, deterministic layer on top of `docker compose`. It never asks
 you to install PHP, Composer, a web server, or a database — those all run in
-containers described by files PHPBox generates from a single config.
+containers described by files DBox generates from a single config.
 
 ## High-level flow
 
 ```
                     ┌──────────────┐
-   phpbox.yml ─────▶│  config.py   │  load() → ProjectConfig
+   dbox.yml ─────▶│  config.py   │  load() → ProjectConfig
                     └──────┬───────┘
                            │
               detection.py │ (init / detect only)
@@ -19,7 +19,7 @@ containers described by files PHPBox generates from a single config.
                     └──────┬───────┘                            │
                            │ renders Jinja2 templates           │
                            ▼                                    │
-                    .phpbox/ artifacts                   templates/*.j2
+                    .dbox/ artifacts                   templates/*.j2
               (docker-compose.yml, Dockerfile,
                php.ini, server config, .env)
                            │
@@ -35,21 +35,21 @@ containers described by files PHPBox generates from a single config.
 
 | Path | Tracked? | Purpose |
 |---|---|---|
-| `phpbox.yml` | **Commit it.** | The single source of truth describing the environment. |
-| `.phpbox/` | Mostly ignored. | Generated artifacts. Regenerated on every `start`; data dirs are git-ignored. |
+| `dbox.yml` | **Commit it.** | The single source of truth describing the environment. |
+| `.dbox/` | Mostly ignored. | Generated artifacts. Regenerated on every `start`; data dirs are git-ignored. |
 
-Because the artifacts are always regenerated from `phpbox.yml`, you can delete
-`.phpbox/` at any time and `phpbox start` will rebuild it. The only stateful
-parts are `.phpbox/data/` (database files) and `.phpbox/backups/`.
+Because the artifacts are always regenerated from `dbox.yml`, you can delete
+`.dbox/` at any time and `dbox start` will rebuild it. The only stateful
+parts are `.dbox/data/` (database files) and `.dbox/backups/`.
 
-## Generated `.phpbox/` layout
+## Generated `.dbox/` layout
 
 ```
-.phpbox/
+.dbox/
 ├── docker-compose.yml          # the whole stack
 ├── php/
 │   ├── Dockerfile              # FROM php:<ver>-fpm (or -apache), extensions, composer
-│   └── php.ini                 # rendered from php.ini in phpbox.yml
+│   └── php.ini                 # rendered from php.ini in dbox.yml
 ├── nginx/default.conf          # when server = nginx
 ├── caddy/Caddyfile             # when server = caddy
 ├── litespeed/                  # when server = litespeed
@@ -68,10 +68,10 @@ parts are `.phpbox/data/` (database files) and `.phpbox/backups/`.
 | Module | Responsibility |
 |---|---|
 | `cli.py` | Typer application. Defines every command and wires the modules together. |
-| `config.py` | `ProjectConfig` dataclasses, YAML load/save, and `find_root()` (walks up to locate `phpbox.yml`). |
+| `config.py` | `ProjectConfig` dataclasses, YAML load/save, and `find_root()` (walks up to locate `dbox.yml`). |
 | `detection.py` | Inspects a directory to infer framework, PHP version, extensions, services. |
 | `plugins/` | One `FrameworkPlugin` per framework. The registry (`plugins/__init__.py`) selects the best match by `priority`. |
-| `generator.py` | Builds the render context and writes `.phpbox/` from the Jinja2 templates. |
+| `generator.py` | Builds the render context and writes `.dbox/` from the Jinja2 templates. |
 | `extensions.py` | Metadata mapping each extension to its install method (`core` / `pecl` / `builtin`) and required apt packages. |
 | `engine.py` | Wraps `docker compose` (`up`, `down`, `build`, `logs`, `exec`, `run --rm`). |
 | `ports.py` | Finds free host ports, avoiding collisions between concurrent projects. |
@@ -82,7 +82,7 @@ parts are `.phpbox/data/` (database files) and `.phpbox/backups/`.
 
 ## Container topology
 
-PHPBox favours **separate containers** for the web server, PHP runtime, and
+DBox favours **separate containers** for the web server, PHP runtime, and
 database:
 
 * `php` — PHP-FPM, built from the generated Dockerfile (your extensions live here).
@@ -94,7 +94,7 @@ database:
 `php` container itself, so there is no separate `web` container. See
 [web-servers.md](web-servers.md) for the reasoning.
 
-All services share a project-scoped bridge network named `phpbox`, and your
+All services share a project-scoped bridge network named `dbox`, and your
 application source is bind-mounted into every container at `/var/www/html`.
 
 > **The PHP process runs as `root` inside the container.** This is deliberate:
@@ -127,9 +127,9 @@ A few behaviours are built in so a fresh project runs without manual fixups:
 
 ## Why shell out to `docker compose`?
 
-Rather than the Docker SDK, PHPBox invokes the `docker compose` CLI. This means:
+Rather than the Docker SDK, DBox invokes the `docker compose` CLI. This means:
 
 * It behaves identically on Docker Desktop and a plain Docker Engine.
 * The generated `docker-compose.yml` is a first-class, inspectable artifact you
-  can run by hand or hand off to teammates who don't use PHPBox.
+  can run by hand or hand off to teammates who don't use DBox.
 * There's nothing magic to learn — it's the same Compose you already know.

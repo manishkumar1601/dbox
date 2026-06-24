@@ -1,17 +1,17 @@
 # Writing a Framework Plugin
 
 Adding support for a new framework means dropping one file into
-`src/phpbox/plugins/` and registering it. Plugins subclass `FrameworkPlugin`
-(`src/phpbox/plugins/base.py`).
+`src/dbox/plugins/` and registering it. Plugins subclass `FrameworkPlugin`
+(`src/dbox/plugins/base.py`).
 
 ## The interface
 
 ```python
-from phpbox.plugins.base import Credential, DetectionRule, FrameworkPlugin
+from dbox.plugins.base import Credential, DetectionRule, FrameworkPlugin
 
 
 class MyFrameworkPlugin(FrameworkPlugin):
-    name = "myfw"               # used by `phpbox create myfw <name>`
+    name = "myfw"               # used by `dbox create myfw <name>`
     label = "MyFramework"       # shown in output
     document_root = "/public"   # web root relative to the app root
     priority = 70               # higher wins when multiple plugins match
@@ -29,7 +29,7 @@ class MyFrameworkPlugin(FrameworkPlugin):
         return ["redis"]                     # auto-enabled on create/init
 
     def commands(self) -> dict[str, list[str]]:
-        # Exposes `phpbox myfw <args…>` → `php bin/myfw <args…>` in the container
+        # Exposes `dbox myfw <args…>` → `php bin/myfw <args…>` in the container
         return {"myfw": ["php", "bin/myfw"]}
 
     def create_steps(self, project_name: str) -> list[str] | None:
@@ -59,7 +59,7 @@ package instead, or they'll over-match unrelated projects.
 |---|---|---|
 | `extensions()` | PHP extensions the framework needs | `[]` |
 | `services()` | Companion services to auto-enable | `[]` |
-| `commands()` | Map `phpbox <cmd>` → in-container argv | `{}` |
+| `commands()` | Map `dbox <cmd>` → in-container argv | `{}` |
 | `create_steps(name)` | Scaffolding shell commands | `None` (no scaffolding) |
 | `create_credentials()` | Secrets to collect before scaffolding | `[]` |
 | `create_env(creds)` | Turn collected secrets into container env vars | passthrough |
@@ -85,10 +85,10 @@ prompts interactively (`hide_input=secret`).
 
 ## Registering the plugin
 
-Add it to the registry in `src/phpbox/plugins/__init__.py`:
+Add it to the registry in `src/dbox/plugins/__init__.py`:
 
 ```python
-from phpbox.plugins.myfw import MyFrameworkPlugin
+from dbox.plugins.myfw import MyFrameworkPlugin
 
 _PLUGIN_CLASSES = [
     LaravelPlugin,
@@ -97,18 +97,18 @@ _PLUGIN_CLASSES = [
 ]
 ```
 
-That's it — detection, `phpbox create myfw`, the `phpbox myfw` CLI, and doctor
+That's it — detection, `dbox create myfw`, the `dbox myfw` CLI, and doctor
 checks all pick it up automatically.
 
 ## Pass-through commands
 
 If you add a `commands()` mapping, also register a top-level pass-through in
-`cli.py` (next to `artisan`, `spark`, etc.) so `phpbox myfw …` forwards
+`cli.py` (next to `artisan`, `spark`, etc.) so `dbox myfw …` forwards
 arbitrary arguments into the container. Existing ones are a copy-paste template.
 
 ## Testing your plugin
 
-Add cases to `tests/test_phpbox.py`:
+Add cases to `tests/test_dbox.py`:
 
 ```python
 def test_detect_myfw(tmp_path):

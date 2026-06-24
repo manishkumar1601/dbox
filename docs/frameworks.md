@@ -1,28 +1,28 @@
 # Frameworks
 
-PHPBox supports 7 frameworks and 4 CMS platforms. Each is implemented as a
-plugin in `src/phpbox/plugins/` describing how to detect it, what it needs, how
+DBox supports 7 frameworks and 4 CMS platforms. Each is implemented as a
+plugin in `src/dbox/plugins/` describing how to detect it, what it needs, how
 to scaffold it, and which native CLI it exposes.
 
 ## Supported
 
-| Name (`phpbox create <name>`) | Label | Document root | Native CLI |
+| Name (`dbox create <name>`) | Label | Document root | Native CLI |
 |---|---|---|---|
-| `laravel` | Laravel | `/public` | `phpbox artisan` |
-| `symfony` | Symfony | `/public` | `phpbox console` |
-| `codeigniter` | CodeIgniter 4 | `/public` | `phpbox spark` |
+| `laravel` | Laravel | `/public` | `dbox artisan` |
+| `symfony` | Symfony | `/public` | `dbox console` |
+| `codeigniter` | CodeIgniter 4 | `/public` | `dbox spark` |
 | `codeigniter3` | CodeIgniter 3 | `/` | — |
-| `cakephp` | CakePHP | `/webroot` | `phpbox cake` |
-| `yii` | Yii | `/web` | `phpbox yii` |
+| `cakephp` | CakePHP | `/webroot` | `dbox cake` |
+| `yii` | Yii | `/web` | `dbox yii` |
 | `corephp` | Core PHP | `/` | — |
-| `wordpress` | WordPress | `/` | `phpbox wp` |
-| `drupal` | Drupal | `/web` | `phpbox drush` |
-| `magento` | Magento | `/pub` | `phpbox magento` |
-| `joomla` | Joomla | `/` | `phpbox joomla` |
+| `wordpress` | WordPress | `/` | `dbox wp` |
+| `drupal` | Drupal | `/web` | `dbox drush` |
+| `magento` | Magento | `/pub` | `dbox magento` |
+| `joomla` | Joomla | `/` | `dbox joomla` |
 
 ## Default services per framework
 
-`phpbox create`/`init` enable a sensible set of companion services per
+`dbox create`/`init` enable a sensible set of companion services per
 framework (toggle any afterwards — see [services.md](services.md)):
 
 | Framework | Mailpit | phpMyAdmin | Elasticsearch | Redis |
@@ -36,29 +36,29 @@ framework (toggle any afterwards — see [services.md](services.md)):
 | CakePHP, Yii, Drupal, Joomla | | | | |
 
 **Redis is off by default everywhere** — enable per project with
-`phpbox redis enable`. Every framework also gets a **MariaDB** database (unless
+`dbox redis enable`. Every framework also gets a **MariaDB** database (unless
 you switch to SQLite), with credentials matching the project name plus a
 `root` / `root` admin login (see [databases.md](databases.md)).
 
 ## Automatic database connection
 
-For **Laravel, Symfony, CakePHP, and CodeIgniter 4**, PHPBox wires the app to
+For **Laravel, Symfony, CakePHP, and CodeIgniter 4**, DBox wires the app to
 the database automatically (via injected environment variables) — a freshly
 created project connects with no manual config, and waits for the DB to be ready
 before starting. See [databases.md](databases.md#connecting-from-your-app).
 
 ## Notes on specific frameworks
 
-* **WordPress** — needs the `mysqli` extension (not just PDO); PHPBox enables it
+* **WordPress** — needs the `mysqli` extension (not just PDO); DBox enables it
   automatically. DB config is entered in WordPress's install wizard (host `db`).
-  WordPress installs WP-CLI into the image (`phpbox wp …`).
+  WordPress installs WP-CLI into the image (`dbox wp …`).
 * **CodeIgniter 3** — CI 3.1.x isn't clean on PHP 8.2+ (it emits "dynamic
-  property deprecated" notices), so PHPBox defaults CI3 projects to **PHP 8.1**.
-  Switch any project's PHP with `phpbox php use <version>`.
+  property deprecated" notices), so DBox defaults CI3 projects to **PHP 8.1**.
+  Switch any project's PHP with `dbox php use <version>`.
 
 ## How detection works
 
-`phpbox init` / `phpbox detect` run every plugin's detection rules and pick the
+`dbox init` / `dbox detect` run every plugin's detection rules and pick the
 highest-`priority` match. A plugin matches if **any** of these is true:
 
 * a required set of **files** all exist, or
@@ -85,7 +85,7 @@ higher `priority` wins.
 PHP version is additionally inferred from the `php` constraint in
 `composer.json`; extensions from framework defaults plus any `ext-*` requires.
 
-## Scaffolding (`phpbox create`)
+## Scaffolding (`dbox create`)
 
 Most frameworks scaffold via `composer create-project` run inside the PHP
 container, so the result lands in your project on the host:
@@ -110,7 +110,7 @@ Magento's Composer repository (`repo.magento.com`) requires **authenticated
 access keys**, generated at *Adobe Commerce Marketplace → My Profile → Access
 Keys*. The public key is the username, the private key the password.
 
-`phpbox create magento shop` will:
+`dbox create magento shop` will:
 
 1. Prompt for the keys — or read `MAGENTO_PUBLIC_KEY` / `MAGENTO_PRIVATE_KEY`
    from the environment (useful in CI):
@@ -118,7 +118,7 @@ Keys*. The public key is the username, the private key the password.
    ```bash
    export MAGENTO_PUBLIC_KEY=xxxxxxxx
    export MAGENTO_PRIVATE_KEY=yyyyyyyy
-   phpbox create magento shop
+   dbox create magento shop
    ```
 
 2. Inject them as a `COMPOSER_AUTH` environment variable into the scaffolding
@@ -129,7 +129,7 @@ Keys*. The public key is the username, the private key the password.
 
    ```bash
    # db-name is your project name; root / root always works as the DB login
-   phpbox magento setup:install \
+   dbox magento setup:install \
      --base-url=http://localhost --db-host=db --db-name=<project> \
      --db-user=root --db-password=root \
      --search-engine=elasticsearch7 --elasticsearch-host=elasticsearch \

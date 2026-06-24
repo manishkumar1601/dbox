@@ -3,15 +3,15 @@
 ## Project layout
 
 ```
-phpbox/
+dbox/
 ├── pyproject.toml          packaging, dependencies, tool config
 ├── README.md  ·  LICENSE
 ├── src/
-│   └── phpbox/             the package (src-layout)
+│   └── dbox/             the package (src-layout)
 │       ├── cli.py          Typer CLI
-│       ├── config.py       phpbox.yml model
+│       ├── config.py       dbox.yml model
 │       ├── detection.py    framework/PHP/extension inference
-│       ├── generator.py    renders .phpbox/ from the config
+│       ├── generator.py    renders .dbox/ from the config
 │       ├── engine.py       docker compose wrapper
 │       ├── extensions.py   extension install metadata
 │       ├── certs.py        TLS certificate generation
@@ -24,9 +24,9 @@ phpbox/
 └── docs/                   this documentation
 ```
 
-The package uses **src-layout**: the importable code lives under `src/phpbox/`,
+The package uses **src-layout**: the importable code lives under `src/dbox/`,
 which keeps test runs honest (they import the installed package, not the working
-directory) and avoids the awkward `phpbox/phpbox/` nesting.
+directory) and avoids the awkward `dbox/dbox/` nesting.
 
 ## Dev setup
 
@@ -42,7 +42,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-The suite (`tests/test_phpbox.py`) covers detection, config round-trips,
+The suite (`tests/test_dbox.py`) covers detection, config round-trips,
 extension resolution, generator output for every server/database combination,
 SSL/LiteSpeed artifacts, and the Magento credential flow. It needs **no Docker**
 — it validates the generated artifacts, not running containers.
@@ -54,10 +54,10 @@ SSL/LiteSpeed artifacts, and the Magento credential flow. It needs **no Docker**
 
 ```bash
 mkdir /tmp/demo && cd /tmp/demo && echo "<?php phpinfo();" > index.php
-phpbox init
-phpbox start
+dbox init
+dbox start
 curl http://localhost:8080
-phpbox down -v
+dbox down -v
 ```
 
 ## Coding conventions
@@ -65,7 +65,7 @@ phpbox down -v
 * **Match the surrounding style.** Type hints, dataclasses for config, small
   focused modules.
 * **The config is the source of truth.** New environment features should be a
-  field in `phpbox.yml` that the generator turns into an artifact — not
+  field in `dbox.yml` that the generator turns into an artifact — not
   imperative state hidden in the CLI.
 * **Templates over string-building.** Generated files come from `templates/*.j2`.
 * **Shell out to `docker compose`** via `engine.py` rather than adding a new
@@ -89,5 +89,5 @@ See [installation.md](installation.md#building-a-standalone-binary).
 ## Commit / PR notes
 
 * Run `pytest` before pushing.
-* Keep `phpbox.yml` behaviour backward-compatible — `config.from_dict` tolerates
+* Keep `dbox.yml` behaviour backward-compatible — `config.from_dict` tolerates
   missing keys via defaults, so additive fields are safe.

@@ -1,17 +1,17 @@
-# PHPBox
+# DBox
 
 **Universal PHP Development Environment Manager** — create and run any PHP
 framework or CMS with only Docker installed. No PHP, Composer, Apache, Nginx,
 MySQL, XAMPP/WAMP/MAMP/Laragon on your host.
 
 ```bash
-phpbox create laravel blog      # scaffold a new project
-cd blog && phpbox start         # build + run it
+dbox create laravel blog      # scaffold a new project
+cd blog && dbox start         # build + run it
 
 # …or for an existing repo:
 git clone <project> && cd project
-phpbox init
-phpbox start
+dbox init
+dbox start
 ```
 
 ---
@@ -25,36 +25,36 @@ phpbox start
 
 ### One line — no clone needed
 
-The installer pulls the **latest PHPBox straight from GitHub** and, if Python or
+The installer pulls the **latest DBox straight from GitHub** and, if Python or
 Docker are missing, installs them too (via `winget` on Windows, Homebrew/apt on
-macOS/Linux). It installs PHPBox as a **global, isolated** tool (via `pipx`) so
-`phpbox` works in **any folder**.
+macOS/Linux). It installs DBox as a **global, isolated** tool (via `pipx`) so
+`dbox` works in **any folder**.
 
 **Windows (PowerShell):**
 
 ```powershell
-irm https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/manishkumar1601/dbox/master/scripts/install.ps1 | iex
 ```
 
 **macOS / Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/manishkumar1601/dbox/master/scripts/install.sh | bash
 ```
 
 Then open a **new terminal** and:
 
 ```bash
-phpbox --help
-phpbox doctor          # checks Docker is installed and running
+dbox --help
+dbox doctor          # checks Docker is installed and running
 ```
 
 > ⚠️ **Docker Desktop needs a reboot + manual first launch** before your first
-> `phpbox start` (no installer can start the Docker engine for you). The script
+> `dbox start` (no installer can start the Docker engine for you). The script
 > installs it and reminds you.
 >
-> Update any time with **`phpbox update`**, and remove it with
-> **`phpbox uninstall`**. PHPBox also tells you when a newer version is available.
+> Update any time with **`dbox update`**, and remove it with
+> **`dbox uninstall`**. DBox also tells you when a newer version is available.
 
 > 📖 Full fresh-PC walkthrough and troubleshooting:
 > **[docs/installation.md → First-time setup on a fresh PC](docs/installation.md#first-time-setup-on-a-fresh-pc)**.
@@ -64,33 +64,33 @@ phpbox doctor          # checks Docker is installed and running
 Use an **editable** install so code changes apply immediately (keep the repo):
 
 ```bash
-git clone https://github.com/manishkumar1601/phpbox && cd phpbox
+git clone https://github.com/manishkumar1601/dbox && cd dbox
 pip install -e .
-phpbox --help
+dbox --help
 ```
 
-(or run without installing: `python -m phpbox --help`)
+(or run without installing: `python -m dbox --help`)
 
 ### Then create or run a project
 
 ```bash
-phpbox create laravel blog && cd blog && phpbox start   # new project
+dbox create laravel blog && cd blog && dbox start   # new project
 # — or —
-cd existing-project && phpbox init && phpbox start       # existing project
+cd existing-project && dbox init && dbox start       # existing project
 ```
 
 ## How it works
 
-Everything PHPBox needs lives in two places inside your project:
+Everything DBox needs lives in two places inside your project:
 
 ```
-phpbox.yml      # the single source of truth — edit this
-.phpbox/        # generated Docker artifacts (disposable, regenerated on start)
+dbox.yml      # the single source of truth — edit this
+.dbox/        # generated Docker artifacts (disposable, regenerated on start)
 ```
 
-`phpbox.yml` is read by the **generator**, which renders a `docker-compose.yml`,
+`dbox.yml` is read by the **generator**, which renders a `docker-compose.yml`,
 a PHP `Dockerfile` (with your extensions), `php.ini`, and the web-server config.
-PHPBox then drives `docker compose` to build and run the stack. See
+DBox then drives `docker compose` to build and run the stack. See
 [docs/architecture.md](docs/architecture.md) for the full picture.
 
 It aims to **just work** out of the box: free ports are picked automatically
@@ -103,16 +103,16 @@ ready, and a post-start summary prints every URL and credential in one place.
 ## Project structure
 
 ```
-phpbox/                     repo root
+dbox/                     repo root
 ├── pyproject.toml          packaging + dependencies
 ├── README.md
 ├── LICENSE
 ├── src/
-│   └── phpbox/             the importable package (src-layout)
+│   └── dbox/             the importable package (src-layout)
 │       ├── cli.py          Typer CLI — wires every command
-│       ├── config.py       phpbox.yml model (load / save / find_root)
+│       ├── config.py       dbox.yml model (load / save / find_root)
 │       ├── detection.py    framework + PHP version + extension inference
-│       ├── generator.py    renders .phpbox/ from the config via Jinja2
+│       ├── generator.py    renders .dbox/ from the config via Jinja2
 │       ├── engine.py       docker compose wrapper (up/down/exec/logs…)
 │       ├── extensions.py   PHP extension install metadata
 │       ├── certs.py        local TLS certificate generation
@@ -132,22 +132,22 @@ phpbox/                     repo root
 
 | Command | Description |
 |---|---|
-| `phpbox init` | Detect an existing project and generate its environment |
-| `phpbox create <framework> <name>` | Scaffold a new project |
-| `phpbox start` / `stop` / `restart` / `down` | Lifecycle control |
-| `phpbox logs [-f] [service]` · `phpbox shell [service]` | Inspect / enter containers |
-| `phpbox php use 8.4` · `phpbox composer use 2.8` | Switch runtime versions |
-| `phpbox server nginx\|apache\|litespeed\|caddy` | Switch web server |
-| `phpbox db mariadb\|mysql\|postgres\|sqlite` | Switch database engine |
-| `phpbox ext list\|install\|remove` | Manage PHP extensions |
-| `phpbox redis\|mail\|phpmyadmin\|search …` | Toggle companion services |
-| `phpbox ssl enable\|disable` | Local HTTPS with auto-generated certs |
-| `phpbox db:backup` · `phpbox db:restore <file>` | Database backups |
-| `phpbox export` · `phpbox import <zip>` | Portable project packages |
-| `phpbox detect` · `phpbox doctor` | Inspect / diagnose |
-| `phpbox update` | Update PHPBox to the latest version from GitHub |
-| `phpbox uninstall` | Remove PHPBox from your system |
-| `phpbox artisan\|spark\|wp\|cake\|console\|yii\|drush\|magento\|joomla …` | Framework CLIs |
+| `dbox init` | Detect an existing project and generate its environment |
+| `dbox create <framework> <name>` | Scaffold a new project |
+| `dbox start` / `stop` / `restart` / `down` | Lifecycle control |
+| `dbox logs [-f] [service]` · `dbox shell [service]` | Inspect / enter containers |
+| `dbox php use 8.4` · `dbox composer use 2.8` | Switch runtime versions |
+| `dbox server nginx\|apache\|litespeed\|caddy` | Switch web server |
+| `dbox db mariadb\|mysql\|postgres\|sqlite` | Switch database engine |
+| `dbox ext list\|install\|remove` | Manage PHP extensions |
+| `dbox redis\|mail\|phpmyadmin\|search …` | Toggle companion services |
+| `dbox ssl enable\|disable` | Local HTTPS with auto-generated certs |
+| `dbox db:backup` · `dbox db:restore <file>` | Database backups |
+| `dbox export` · `dbox import <zip>` | Portable project packages |
+| `dbox detect` · `dbox doctor` | Inspect / diagnose |
+| `dbox update` | Update DBox to the latest version from GitHub |
+| `dbox uninstall` | Remove DBox from your system |
+| `dbox artisan\|spark\|wp\|cake\|console\|yii\|drush\|magento\|joomla …` | Framework CLIs |
 
 Full reference: [docs/commands.md](docs/commands.md).
 
@@ -167,7 +167,7 @@ Details and detection rules: [docs/frameworks.md](docs/frameworks.md).
 | [docs/installation.md](docs/installation.md) | Requirements, install, building a standalone binary |
 | [docs/getting-started.md](docs/getting-started.md) | First project, both `create` and `init` flows |
 | [docs/architecture.md](docs/architecture.md) | Components, data flow, the generation pipeline |
-| [docs/configuration.md](docs/configuration.md) | Complete `phpbox.yml` reference |
+| [docs/configuration.md](docs/configuration.md) | Complete `dbox.yml` reference |
 | [docs/commands.md](docs/commands.md) | Every CLI command and option |
 | [docs/frameworks.md](docs/frameworks.md) | Supported frameworks, detection, scaffolding |
 | [docs/web-servers.md](docs/web-servers.md) | nginx, Apache, Caddy, OpenLiteSpeed |

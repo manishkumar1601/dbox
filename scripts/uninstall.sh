@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# PHPBox uninstaller (Linux / macOS)
+# DBox uninstaller (Linux / macOS)
 #
-# Removes the `phpbox` command, whether it was installed via pipx or pip.
+# Removes the `dbox` command, whether it was installed via pipx or pip.
 #
 set -uo pipefail
 
@@ -17,17 +17,17 @@ if [ -z "$PY" ]; then PY="python3"; fi
 removed=0
 
 # Try pipx first.
-if "$PY" -m pipx list 2>/dev/null | grep -qi 'package phpbox'; then
+if "$PY" -m pipx list 2>/dev/null | grep -qi 'package dbox'; then
   echo "Removing pipx install…"
-  "$PY" -m pipx uninstall phpbox && removed=1
+  "$PY" -m pipx uninstall dbox && removed=1
 fi
 
 # Fall back to pip.
 if [ "$removed" -eq 0 ]; then
   echo "Removing pip install…"
-  "$PY" -m pip uninstall -y phpbox || true
+  "$PY" -m pip uninstall -y dbox || true
 fi
 
-green "✓ PHPBox uninstalled."
-echo "Your projects and their .phpbox/ folders are untouched."
-echo "Remove a project's containers with: docker compose -f <project>/.phpbox/docker-compose.yml down -v"
+green "✓ DBox uninstalled."
+echo "Your projects and their .dbox/ folders are untouched."
+echo "Remove a project's containers with: docker compose -f <project>/.dbox/docker-compose.yml down -v"

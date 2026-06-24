@@ -3,13 +3,13 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "phpbox"
+name = "dbox"
 version = "0.2.0"
 description = "Universal PHP Development Environment Manager — run any PHP framework with only Docker installed."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
-authors = [{ name = "PHPBox" }]
+authors = [{ name = "DBox" }]
 keywords = ["php", "docker", "laravel", "symfony", "wordpress", "development", "cli"]
 
 dependencies = [
@@ -24,20 +24,20 @@ dependencies = [
 dev = ["pytest>=8.0", "pyinstaller>=6.0"]
 
 [project.urls]
-Homepage = "https://github.com/manishkumar1601/phpbox"
-Documentation = "https://github.com/manishkumar1601/phpbox/tree/master/docs"
-Repository = "https://github.com/manishkumar1601/phpbox"
-Issues = "https://github.com/manishkumar1601/phpbox/issues"
+Homepage = "https://github.com/manishkumar1601/dbox"
+Documentation = "https://github.com/manishkumar1601/dbox/tree/master/docs"
+Repository = "https://github.com/manishkumar1601/dbox"
+Issues = "https://github.com/manishkumar1601/dbox/issues"
 
 [project.scripts]
-phpbox = "phpbox.cli:app"
+dbox = "dbox.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["phpbox*"]
+include = ["dbox*"]
 
 [tool.setuptools.package-data]
-phpbox = ["templates/**/*"]
+dbox = ["templates/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

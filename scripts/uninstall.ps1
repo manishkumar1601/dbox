@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    PHPBox uninstaller (Windows).
+    DBox uninstaller (Windows).
 
 .DESCRIPTION
-    Removes the `phpbox` command, whether it was installed via pipx or pip.
+    Removes the `dbox` command, whether it was installed via pipx or pip.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts\uninstall.ps1
@@ -21,18 +21,18 @@ $removed = $false
 
 # Try pipx first.
 $pipxList = & $py -m pipx list 2>$null
-if ($pipxList -match "package phpbox") {
+if ($pipxList -match "package dbox") {
     Write-Host "Removing pipx install..."
-    & $py -m pipx uninstall phpbox
+    & $py -m pipx uninstall dbox
     if ($LASTEXITCODE -eq 0) { $removed = $true }
 }
 
 # Fall back to pip.
 if (-not $removed) {
     Write-Host "Removing pip install..."
-    & $py -m pip uninstall -y phpbox
+    & $py -m pip uninstall -y dbox
 }
 
-Write-Host "PHPBox uninstalled." -ForegroundColor Green
-Write-Host "Your projects and their .phpbox/ folders are untouched."
-Write-Host "Remove a project's containers with: docker compose -f <project>\.phpbox\docker-compose.yml down -v"
+Write-Host "DBox uninstalled." -ForegroundColor Green
+Write-Host "Your projects and their .dbox/ folders are untouched."
+Write-Host "Remove a project's containers with: docker compose -f <project>\.dbox\docker-compose.yml down -v"

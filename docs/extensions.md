@@ -1,16 +1,16 @@
 # PHP Extensions
 
 PHP extensions are baked into the PHP image at build time. Manage them with the
-`ext` commands or by editing `php.extensions` in `phpbox.yml`.
+`ext` commands or by editing `php.extensions` in `dbox.yml`.
 
 ```bash
-phpbox ext list                 # show supported + enabled
-phpbox ext install redis        # add + rebuild image
-phpbox ext install xdebug
-phpbox ext remove redis         # remove + rebuild
+dbox ext list                 # show supported + enabled
+dbox ext install redis        # add + rebuild image
+dbox ext install xdebug
+dbox ext remove redis         # remove + rebuild
 ```
 
-Each `install`/`remove` updates `phpbox.yml`, regenerates the Dockerfile, and
+Each `install`/`remove` updates `dbox.yml`, regenerates the Dockerfile, and
 rebuilds the PHP image.
 
 ## How installation works
@@ -31,7 +31,7 @@ maintain. It supports core, PECL, and bundled extensions alike (`gd`, `intl`,
 
 ## Extensions with first-class metadata
 
-PHPBox keeps lightweight metadata for the common extensions (used by framework
+DBox keeps lightweight metadata for the common extensions (used by framework
 defaults and the `ext list` view); any other valid extension name is passed
 straight to `install-php-extensions`.
 
@@ -51,16 +51,16 @@ you know to adjust.
 New projects start with `gd`, `zip`, `intl`, `pdo_mysql`, `opcache`. Each
 framework adds what it needs (e.g. Laravel adds `bcmath`, `exif`; WordPress adds
 `mysqli`, `imagick`; Magento adds `soap`, `xsl`, `sodium`, `mbstring`, …).
-Anything in `composer.json` as `ext-*` is picked up by `phpbox init` too.
+Anything in `composer.json` as `ext-*` is picked up by `dbox init` too.
 
 ## Xdebug
 
 ```bash
-phpbox ext install xdebug
-phpbox start
+dbox ext install xdebug
+dbox start
 ```
 
-Then add Xdebug settings under `php.ini` in `phpbox.yml`, e.g.:
+Then add Xdebug settings under `php.ini` in `dbox.yml`, e.g.:
 
 ```yaml
 php:

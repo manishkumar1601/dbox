@@ -1,8 +1,8 @@
-# PHPBox generated runtime artifacts
-.phpbox/data/
-.phpbox/backups/
-.phpbox/cache/
-phpbox-package.zip
+# DBox generated runtime artifacts
+.dbox/data/
+.dbox/backups/
+.dbox/cache/
+dbox-package.zip
 
 # Python
 __pycache__/

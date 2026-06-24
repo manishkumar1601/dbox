@@ -1,8 +1,8 @@
-# Configuration — `phpbox.yml`
+# Configuration — `dbox.yml`
 
-`phpbox.yml` is the single source of truth for a project's environment. It is
-created by `phpbox init` / `phpbox create`, can be edited by hand, and is read
-on every `phpbox start` to regenerate the `.phpbox/` artifacts.
+`dbox.yml` is the single source of truth for a project's environment. It is
+created by `dbox init` / `dbox create`, can be edited by hand, and is read
+on every `dbox start` to regenerate the `.dbox/` artifacts.
 
 ## Full example
 
@@ -68,7 +68,7 @@ ports:
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `name` | string | dir name | Project name; used for container names (`phpbox-<name>-php`). |
+| `name` | string | dir name | Project name; used for container names (`dbox-<name>-php`). |
 | `framework` | string | `corephp` | One of the [supported frameworks](frameworks.md). |
 | `document_root` | string | `/public` | Web root relative to the app root. Becomes `/var/www/html<document_root>` in the container. |
 
@@ -103,7 +103,7 @@ ports:
 | `password` | string | project name | Password for `user`. |
 | `root_password` | string | `root` | Root/superuser password (admin login is `root` / `root`). |
 
-> `phpbox create <fw> <name>` / `phpbox init` set `name`, `user`, and
+> `dbox create <fw> <name>` / `dbox init` set `name`, `user`, and
 > `password` all to the project name. So a project called `blog` gets database
 > `blog`, user `blog`, password `blog` — plus the `root` / `root` admin login.
 >
@@ -137,7 +137,7 @@ See [ssl.md](ssl.md).
 ### `ports`
 
 Preferred **host** ports. On `init`/`create` these are auto-adjusted upward to
-avoid collisions with other running projects, so two PHPBox apps never fight
+avoid collisions with other running projects, so two DBox apps never fight
 over `8080`.
 
 | Key | Default | Maps to |
@@ -153,18 +153,18 @@ over `8080`.
 
 ## Editing by hand vs. commands
 
-Both are equivalent. These commands just edit `phpbox.yml` and regenerate:
+Both are equivalent. These commands just edit `dbox.yml` and regenerate:
 
 | Command | Field changed |
 |---|---|
-| `phpbox php use 8.4` | `php.version` |
-| `phpbox composer use 2.8` | `composer.version` |
-| `phpbox server caddy` | `server.type` |
-| `phpbox db postgres` | `database.engine` (+ a sensible `version`) |
-| `phpbox ext install redis` | appends to `php.extensions` |
-| `phpbox redis enable` | `services.redis` |
-| `phpbox ssl enable` | `ssl.enabled` |
+| `dbox php use 8.4` | `php.version` |
+| `dbox composer use 2.8` | `composer.version` |
+| `dbox server caddy` | `server.type` |
+| `dbox db postgres` | `database.engine` (+ a sensible `version`) |
+| `dbox ext install redis` | appends to `php.extensions` |
+| `dbox redis enable` | `services.redis` |
+| `dbox ssl enable` | `ssl.enabled` |
 
-The `.env` PHPBox writes to `.phpbox/env/.env` contains in-container connection
+The `.env` DBox writes to `.dbox/env/.env` contains in-container connection
 details (`DB_HOST=db`, `REDIS_HOST=redis`, `MAIL_HOST=mailpit`, …) you can copy
 into your application's own `.env`.

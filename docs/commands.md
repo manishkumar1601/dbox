@@ -1,61 +1,61 @@
 # Command Reference
 
-Run `phpbox --help` or `phpbox <command> --help` at any time. Commands that read
+Run `dbox --help` or `dbox <command> --help` at any time. Commands that read
 a project locate it by walking up from the current directory to find
-`phpbox.yml`.
+`dbox.yml`.
 
 ## Environment lifecycle
 
-### `phpbox init [--force]`
-Detect the current project and generate `phpbox.yml` + `.phpbox/`.
-`--force` overwrites an existing `phpbox.yml`.
+### `dbox init [--force]`
+Detect the current project and generate `dbox.yml` + `.dbox/`.
+`--force` overwrites an existing `dbox.yml`.
 
-### `phpbox create <framework> <name>`
+### `dbox create <framework> <name>`
 Scaffold a new project in `./<name>`: writes config, builds the PHP image, runs
 the framework's scaffolding, and starts the stack.
 See [frameworks.md](frameworks.md) for valid `<framework>` values.
 
-### `phpbox start [--build | --no-build]`
-Regenerate `.phpbox/` and start the containers. Builds images first by default
+### `dbox start [--build | --no-build]`
+Regenerate `.dbox/` and start the containers. Builds images first by default
 (`--no-build` skips the rebuild). Before launching it **re-checks ports** and
 shifts any that are now occupied to the next free one, and generates a TLS
 certificate if SSL is enabled and none exists. Waits for the database to be
 healthy, then prints a summary with service URLs **and** the database
 credentials (host, name, username, password, root login, connection string).
 
-### `phpbox stop`
+### `dbox stop`
 Stop containers, preserving them and their data.
 
-### `phpbox restart`
+### `dbox restart`
 Restart the running containers.
 
-### `phpbox down [-v | --volumes]`
+### `dbox down [-v | --volumes]`
 Remove containers and the network. `-v` also removes named volumes.
 
-### `phpbox logs [--follow/-f] [service]`
+### `dbox logs [--follow/-f] [service]`
 Show container logs, optionally for a single service (`php`, `web`, `db`, …).
 
-### `phpbox shell [service]`
+### `dbox shell [service]`
 Open an interactive shell (`bash`, falling back to `sh`) inside a container.
 Defaults to the `php` service.
 
 ## Inspection
 
-### `phpbox detect`
+### `dbox detect`
 Report the framework, PHP version, required extensions, and recommended
-services PHPBox would configure — without writing anything.
+services DBox would configure — without writing anything.
 
-### `phpbox doctor`
-Run health checks: Docker installed, daemon running, `phpbox.yml` present,
+### `dbox doctor`
+Run health checks: Docker installed, daemon running, `dbox.yml` present,
 framework detected, PHP version supported, containers running, database/Redis
 services up, recommended extensions present, SSL configured.
 
-### `phpbox version`
-Print the installed PHPBox version (and note if a newer one is available).
+### `dbox version`
+Print the installed DBox version (and note if a newer one is available).
 
-### `phpbox update`
-Update PHPBox to the latest version from GitHub (same source the installer
-uses). Detects whether you installed via pipx or pip. PHPBox checks GitHub for
+### `dbox update`
+Update DBox to the latest version from GitHub (same source the installer
+uses). Detects whether you installed via pipx or pip. DBox checks GitHub for
 new versions in the background (at most once a day) and prints a one-line notice
 on commands when an update is available; this command applies it.
 
@@ -63,46 +63,46 @@ on commands when an update is available; this command applies it.
 > program can't replace its own files) — open a new terminal to use the new
 > version.
 
-### `phpbox uninstall [--yes | -y]`
-Remove PHPBox from your system. It detects how PHPBox was installed (pipx or
+### `dbox uninstall [--yes | -y]`
+Remove DBox from your system. It detects how DBox was installed (pipx or
 pip) and runs the matching uninstall; `-y` skips the confirmation prompt. Your
-projects and their `.phpbox/` folders are left untouched.
+projects and their `.dbox/` folders are left untouched.
 
 > On Windows the running program can't delete its own files, so the removal is
 > handed to a short detached helper that completes a second or two after the
-> command exits — open a new terminal to confirm `phpbox` is gone. (The
-> `scripts/uninstall.*` scripts remain available too, e.g. if the `phpbox`
+> command exits — open a new terminal to confirm `dbox` is gone. (The
+> `scripts/uninstall.*` scripts remain available too, e.g. if the `dbox`
 > command itself is broken.)
 
 ## Runtime versions
 
-### `phpbox php use <version>`
+### `dbox php use <version>`
 Switch the PHP version (`7.4`–`8.4`) and rebuild the PHP image.
 
-### `phpbox composer use <version>`
+### `dbox composer use <version>`
 Pin Composer to a version (e.g. `2.8`, `latest`) and rebuild.
 
-### `phpbox composer <args…>`
-Run Composer inside the container, e.g. `phpbox composer require monolog/monolog`.
+### `dbox composer <args…>`
+Run Composer inside the container, e.g. `dbox composer require monolog/monolog`.
 
 ## Web server & database
 
-### `phpbox server <nginx|apache|litespeed|caddy>`
-Switch the web server. Run `phpbox start` to apply. See [web-servers.md](web-servers.md).
+### `dbox server <nginx|apache|litespeed|caddy>`
+Switch the web server. Run `dbox start` to apply. See [web-servers.md](web-servers.md).
 
-### `phpbox db <mariadb|mysql|postgres|sqlite>`
+### `dbox db <mariadb|mysql|postgres|sqlite>`
 Switch the database engine (also sets a sensible default version). Run
-`phpbox start` to apply. See [databases.md](databases.md).
+`dbox start` to apply. See [databases.md](databases.md).
 
 ## Extensions
 
-### `phpbox ext list`
+### `dbox ext list`
 List supported extensions, marking the ones currently enabled.
 
-### `phpbox ext install <name>`
+### `dbox ext install <name>`
 Add an extension to `php.extensions` and rebuild the image.
 
-### `phpbox ext remove <name>`
+### `dbox ext remove <name>`
 Remove an extension and rebuild.
 
 See [extensions.md](extensions.md).
@@ -111,37 +111,37 @@ See [extensions.md](extensions.md).
 
 | Command | Effect |
 |---|---|
-| `phpbox redis enable` / `disable` | Toggle Redis |
-| `phpbox mail enable` / `disable` | Toggle Mailpit |
-| `phpbox phpmyadmin enable` / `disable` | Toggle phpMyAdmin |
-| `phpbox search meilisearch` | Enable Meilisearch |
-| `phpbox search elasticsearch` | Enable Elasticsearch |
+| `dbox redis enable` / `disable` | Toggle Redis |
+| `dbox mail enable` / `disable` | Toggle Mailpit |
+| `dbox phpmyadmin enable` / `disable` | Toggle phpMyAdmin |
+| `dbox search meilisearch` | Enable Meilisearch |
+| `dbox search elasticsearch` | Enable Elasticsearch |
 
-Run `phpbox start` afterwards to apply. See [services.md](services.md).
+Run `dbox start` afterwards to apply. See [services.md](services.md).
 
 ## SSL / HTTPS
 
-### `phpbox ssl <enable|disable>`
-Toggle local HTTPS. On the next `phpbox start`, a certificate is generated
+### `dbox ssl <enable|disable>`
+Toggle local HTTPS. On the next `dbox start`, a certificate is generated
 automatically (mkcert if installed, otherwise self-signed). See [ssl.md](ssl.md).
 
 ## Database backup & restore
 
-### `phpbox db:backup`
-Dump the database to `.phpbox/backups/<name>-<timestamp>.sql`
+### `dbox db:backup`
+Dump the database to `.dbox/backups/<name>-<timestamp>.sql`
 (`mysqldump` or `pg_dump` depending on the engine).
 
-### `phpbox db:restore <file.sql>`
-Restore from a dump. A bare filename resolves against `.phpbox/backups/`.
+### `dbox db:restore <file.sql>`
+Restore from a dump. A bare filename resolves against `.dbox/backups/`.
 
 ## Portability
 
-### `phpbox export`
-Package the project into `phpbox-package.zip`, excluding `.git`, `node_modules`,
-`vendor`, and the `.phpbox/{data,backups,cache}` directories.
+### `dbox export`
+Package the project into `dbox-package.zip`, excluding `.git`, `node_modules`,
+`vendor`, and the `.dbox/{data,backups,cache}` directories.
 
-### `phpbox import <file.zip>`
-Unpack a package into the current directory. Follow with `phpbox start`.
+### `dbox import <file.zip>`
+Unpack a package into the current directory. Follow with `dbox start`.
 
 ## Framework CLIs
 
@@ -149,14 +149,14 @@ Each runs the framework's native tool inside the PHP container:
 
 | Command | Runs in container |
 |---|---|
-| `phpbox artisan <args…>` | `php artisan …` (Laravel) |
-| `phpbox spark <args…>` | `php spark …` (CodeIgniter 4) |
-| `phpbox wp <args…>` | `wp --allow-root …` (WordPress) |
-| `phpbox cake <args…>` | `bin/cake …` (CakePHP) |
-| `phpbox console <args…>` | `php bin/console …` (Symfony) |
-| `phpbox yii <args…>` | `php yii …` (Yii) |
-| `phpbox drush <args…>` | `vendor/bin/drush …` (Drupal) |
-| `phpbox magento <args…>` | `php bin/magento …` (Magento) |
-| `phpbox joomla <args…>` | `php cli/joomla.php …` (Joomla) |
+| `dbox artisan <args…>` | `php artisan …` (Laravel) |
+| `dbox spark <args…>` | `php spark …` (CodeIgniter 4) |
+| `dbox wp <args…>` | `wp --allow-root …` (WordPress) |
+| `dbox cake <args…>` | `bin/cake …` (CakePHP) |
+| `dbox console <args…>` | `php bin/console …` (Symfony) |
+| `dbox yii <args…>` | `php yii …` (Yii) |
+| `dbox drush <args…>` | `vendor/bin/drush …` (Drupal) |
+| `dbox magento <args…>` | `php bin/magento …` (Magento) |
+| `dbox joomla <args…>` | `php cli/joomla.php …` (Joomla) |
 
-Unknown flags are passed straight through (e.g. `phpbox artisan migrate --force`).
+Unknown flags are passed straight through (e.g. `dbox artisan migrate --force`).

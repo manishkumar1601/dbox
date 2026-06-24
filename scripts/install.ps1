@@ -1,22 +1,22 @@
 <#
 .SYNOPSIS
-    PHPBox installer (Windows).
+    DBox installer (Windows).
 
 .DESCRIPTION
-    Installs the latest PHPBox straight from GitHub — no clone required. Run it
+    Installs the latest DBox straight from GitHub — no clone required. Run it
     directly or pipe it in:
 
-        irm https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.ps1 | iex
+        irm https://raw.githubusercontent.com/manishkumar1601/dbox/master/scripts/install.ps1 | iex
 
     Missing prerequisites are installed automatically via winget:
-      * Python 3.12+  (required to run the PHPBox CLI)
-      * Docker Desktop (required only when you `phpbox start` a project)
+      * Python 3.12+  (required to run the DBox CLI)
+      * Docker Desktop (required only when you `dbox start` a project)
 
 .PARAMETER Pip
-    Install PHPBox via `pip install --user` instead of pipx.
+    Install DBox via `pip install --user` instead of pipx.
 
 .PARAMETER SkipDeps
-    Do not attempt to install Python / Docker; only install PHPBox.
+    Do not attempt to install Python / Docker; only install DBox.
 #>
 param(
     [switch]$Pip,
@@ -28,8 +28,8 @@ param(
 # codes ($LASTEXITCODE) explicitly instead.
 $ErrorActionPreference = "Continue"
 
-# Latest PHPBox, as a GitHub source tarball (no git / clone needed).
-$Spec = "https://github.com/manishkumar1601/phpbox/archive/refs/heads/master.tar.gz"
+# Latest DBox, as a GitHub source tarball (no git / clone needed).
+$Spec = "https://github.com/manishkumar1601/dbox/archive/refs/heads/master.tar.gz"
 
 function Test-Have($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
 
@@ -49,9 +49,9 @@ function Get-Python {
     return $null
 }
 
-Write-Host "Installing the latest PHPBox from GitHub..." -ForegroundColor Cyan
+Write-Host "Installing the latest DBox from GitHub..." -ForegroundColor Cyan
 
-# === 1. Ensure Python (needed to install + run PHPBox) ===================
+# === 1. Ensure Python (needed to install + run DBox) ===================
 $py = Get-Python
 if (-not $py) {
     if ($SkipDeps) {
@@ -76,9 +76,9 @@ if (-not $py) {
 $ver = & $py -c "import sys;print('%d.%d'%sys.version_info[:2])"
 Write-Host "Using $py (Python $ver)" -ForegroundColor Green
 
-# === 2. Install PHPBox ===================================================
+# === 2. Install DBox ===================================================
 if ($Pip) {
-    Write-Host "Installing PHPBox with pip (--user)..." -ForegroundColor Cyan
+    Write-Host "Installing DBox with pip (--user)..." -ForegroundColor Cyan
     & $py -m pip install --user --upgrade "$Spec"
     $hint = "Make sure your Python user Scripts directory is on your PATH."
 }
@@ -91,12 +91,12 @@ else {
         exit 1
     }
     & $py -m pipx ensurepath | Out-Null
-    Write-Host "Installing PHPBox with pipx..." -ForegroundColor Cyan
+    Write-Host "Installing DBox with pipx..." -ForegroundColor Cyan
     & $py -m pipx install --force "$Spec"
-    $hint = "pipx put 'phpbox' on your PATH."
+    $hint = "pipx put 'dbox' on your PATH."
 }
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "PHPBox install failed (exit $LASTEXITCODE)." -ForegroundColor Red
+    Write-Host "DBox install failed (exit $LASTEXITCODE)." -ForegroundColor Red
     exit 1
 }
 
@@ -108,7 +108,7 @@ if (Test-Have docker) {
         Write-Host "Docker is installed and running." -ForegroundColor Green
     }
     else {
-        Write-Host "Docker is installed but not running - start Docker Desktop before 'phpbox start'." -ForegroundColor Yellow
+        Write-Host "Docker is installed but not running - start Docker Desktop before 'dbox start'." -ForegroundColor Yellow
     }
 }
 elseif ($SkipDeps) {
@@ -119,7 +119,7 @@ elseif (Test-Have winget) {
     winget install -e --id Docker.DockerDesktop `
         --accept-package-agreements --accept-source-agreements
     if ($LASTEXITCODE -eq 0) {
-        $dockerNote = "Docker Desktop was installed. REBOOT, then launch Docker Desktop once (accept the license) before 'phpbox start'."
+        $dockerNote = "Docker Desktop was installed. REBOOT, then launch Docker Desktop once (accept the license) before 'dbox start'."
     }
     else {
         $dockerNote = "Docker Desktop install did not complete (it may need admin rights). Install it from https://www.docker.com/products/docker-desktop/"
@@ -131,7 +131,7 @@ else {
 
 # === Done ================================================================
 Write-Host ""
-Write-Host "PHPBox installed." -ForegroundColor Green
+Write-Host "DBox installed." -ForegroundColor Green
 Write-Host $hint
 if ($dockerNote) { Write-Host $dockerNote -ForegroundColor Yellow }
-Write-Host "Open a NEW terminal, then run:  phpbox --help"
+Write-Host "Open a NEW terminal, then run:  dbox --help"

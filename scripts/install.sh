@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 #
-# PHPBox installer (Linux / macOS)
+# DBox installer (Linux / macOS)
 #
-# Installs the latest PHPBox straight from GitHub — no clone required. Run it
+# Installs the latest DBox straight from GitHub — no clone required. Run it
 # directly or pipe it in:
 #
-#   curl -fsSL https://raw.githubusercontent.com/manishkumar1601/phpbox/master/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/manishkumar1601/dbox/master/scripts/install.sh | bash
 #
 # Missing prerequisites are installed automatically where possible:
-#   * Python 3.12+  (required to run the PHPBox CLI)
-#   * Docker        (required only when you `phpbox start` a project)
+#   * Python 3.12+  (required to run the DBox CLI)
+#   * Docker        (required only when you `dbox start` a project)
 #
 # Flags (when run as a file): --pip (use pip), --skip-deps (don't install Python/Docker)
 #
 set -euo pipefail
 
-# Latest PHPBox, as a GitHub source tarball (no git / clone needed).
-SPEC="https://github.com/manishkumar1601/phpbox/archive/refs/heads/master.tar.gz"
+# Latest DBox, as a GitHub source tarball (no git / clone needed).
+SPEC="https://github.com/manishkumar1601/dbox/archive/refs/heads/master.tar.gz"
 USE_PIP=0
 SKIP_DEPS=0
 for arg in "$@"; do
@@ -72,7 +72,7 @@ install_docker() {
   if [ "$OS" = "Darwin" ]; then
     if have brew; then
       bold "Installing Docker Desktop via Homebrew..."; brew install --cask docker || true
-      yellow "Docker Desktop installed. Launch Docker from Applications once before 'phpbox start'."
+      yellow "Docker Desktop installed. Launch Docker from Applications once before 'dbox start'."
     else
       yellow "Install Docker Desktop: https://www.docker.com/products/docker-desktop/"
     fi
@@ -88,7 +88,7 @@ install_docker() {
   fi
 }
 
-bold "Installing the latest PHPBox from GitHub..."
+bold "Installing the latest DBox from GitHub..."
 
 # === 1. Ensure Python ====================================================
 PY="$(find_python || true)"
@@ -106,9 +106,9 @@ if [ -z "$PY" ]; then
 fi
 echo "Using $PY ($("$PY" -c 'import sys;print("%d.%d"%sys.version_info[:2])'))"
 
-# === 2. Install PHPBox ===================================================
+# === 2. Install DBox ===================================================
 if [ "$USE_PIP" -eq 1 ]; then
-  bold "Installing PHPBox with pip (--user)..."
+  bold "Installing DBox with pip (--user)..."
   "$PY" -m pip install --user --upgrade "$SPEC"
   HINT="Make sure your Python user scripts directory is on your PATH."
 else
@@ -117,9 +117,9 @@ else
     "$PY" -m pip install --user pipx
     "$PY" -m pipx ensurepath
   fi
-  bold "Installing PHPBox with pipx..."
+  bold "Installing DBox with pipx..."
   "$PY" -m pipx install --force "$SPEC"
-  HINT="pipx put 'phpbox' on your PATH."
+  HINT="pipx put 'dbox' on your PATH."
 fi
 
 # === 3. Ensure Docker (runtime only) =====================================
@@ -128,7 +128,7 @@ if have docker; then
   if docker info >/dev/null 2>&1; then
     green "Docker is installed and running."
   else
-    DOCKER_NOTE="Docker is installed but not running - start it before 'phpbox start'."
+    DOCKER_NOTE="Docker is installed but not running - start it before 'dbox start'."
   fi
 elif [ "$SKIP_DEPS" -eq 1 ]; then
   DOCKER_NOTE="Docker not found. Install it before running projects: https://docs.docker.com/get-docker/"
@@ -139,7 +139,7 @@ fi
 
 # === Done ================================================================
 echo
-green "✓ PHPBox installed."
+green "✓ DBox installed."
 echo "$HINT"
 [ -n "$DOCKER_NOTE" ] && yellow "$DOCKER_NOTE"
-echo "Open a NEW terminal, then run:  phpbox --help"
+echo "Open a NEW terminal, then run:  dbox --help"
