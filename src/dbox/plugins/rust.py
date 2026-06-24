@@ -17,10 +17,13 @@ class RustPlugin(FrameworkPlugin):
         return {"cargo": ["cargo"]}
 
     def create_steps(self, project_name: str) -> list[str]:
+        # cargo init always seeds src/main.rs with a `println!("Hello, world!")`
+        # stub, so a non-empty / file-exists check would skip our template and
+        # leave the container with nothing listening. Overwrite unconditionally
+        # — this only runs during `dbox create` on a freshly made directory.
         return [
             f"test -f Cargo.toml || cargo init --name {project_name} --bin .",
-            # Provide a minimal HTTP server using std (no extra deps).
-            "test -s src/main.rs || cat > src/main.rs <<'EOF'\n"
+            "cat > src/main.rs <<'EOF'\n"
             "use std::io::{Read, Write};\n"
             "use std::net::TcpListener;\n\n"
             "fn main() {\n"
